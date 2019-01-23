@@ -1,0 +1,20 @@
+{
+  "name": "file_synchroniser",
+  "version": "1.0.0",
+  "description": "Server app for KCL Group Project. Group name: default_team.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js",
+    "start-watch": "nodemon src/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "mongoose": "^5.4.6"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.9"
+  }
+}
