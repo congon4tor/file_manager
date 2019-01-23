@@ -1,5 +1,7 @@
 {
   "name": "FileSynchroniser",
-  "integrations": {},
+  "integrations": {
+    "cordova": {}
+  },
   "type": "angular"
 }

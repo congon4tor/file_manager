@@ -6,6 +6,30 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content padding>
-  
+<ion-content >
+
+  <ion-list>
+
+  <ion-item>
+    <ion-label>File 1</ion-label>
+    <ion-checkbox [(ngModel)]="pepperoni"></ion-checkbox>
+  </ion-item>
+
+  <ion-item>
+    <ion-label>File 2</ion-label>
+    <ion-checkbox [(ngModel)]="sausage"></ion-checkbox>
+  </ion-item>
+
+  <ion-item>
+    <ion-label>File 3</ion-label>
+    <ion-checkbox [(ngModel)]="mushrooms"></ion-checkbox>
+  </ion-item>
+
+
+</ion-list>
+
+<ion-button color="primary">Upload</ion-button>
+<ion-button color="primary">Delete</ion-button>
+<ion-button color="primary">Sync</ion-button>
+
 </ion-content>
