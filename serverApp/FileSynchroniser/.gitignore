@@ -1,3 +1,6 @@
+#Ignore the directory where files will be saved
+synchronisedFiles/*
+
 .idea/
 .vscode
 
