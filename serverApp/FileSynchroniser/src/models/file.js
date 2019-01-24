@@ -8,11 +8,6 @@ var fileSchema = mongoose.Schema({
         required: true,
         unique: true
     },
-    //Extension of the file
-    extension: {
-        type: String,
-        required: true
-    },
     //Path relative to the fileDirectory
     path: {
         type: String,

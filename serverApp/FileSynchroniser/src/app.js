@@ -1,8 +1,8 @@
 let express = require('express');
 let dbConfig = require('../config/database.js');
 let mongoose = require('mongoose');
-var logger = require('morgan');
-var path = require('path');
+let logger = require('morgan');
+let path = require('path');
 
 
 let fileRouter = require('./routes/files');
@@ -28,6 +28,9 @@ db.on('error', (err) => {
 
 //Set up the logger
 app.use(logger('dev'));
+
+//Set up bodyparser for receiving JSON in body
+app.use(express.json());
 
 //Create a global var for the directory where files will be stored
 global.fileDirectory = path.join(__dirname, '/../synchronisedFiles');
