@@ -2,6 +2,9 @@
 
 \usepackage[usestackEOL]{stackengine}
 \usepackage{xpatch}
+\usepackage{graphicx}
+\usepackage[table,xcdraw]{xcolor}
+
 
 \title{ Initial Group Project Report\\
 7CCSMGPR\\[2\baselineskip]
@@ -28,8 +31,56 @@ Oikonomou, Konstantinos ; Rizos, Nikolaos ; Vasiliou, Christakis}
 
 \section{Project Description}
 	\subsection{Objective Description \& Levels}
+	Our first goal was to understand and capture the requirements of the project that we were about to undertake. The definition of the project requires the presence of a server, a desktop and a mobile application so we decided to delegate the objectives to each of the aforementioned subcategories. Furthermore, in order to aid the correct prioritizing of the work, we decided to color-code the objectives by order of importance, as seen at Table 1. Green objectives represent the bare minimum functionality of the corresponding component and should be completed first. Yellow objectives represent important functions of the subsystems and should be done immediately after. On the contrary, red objectives represent features that are not essential for the system to be operational, but could potentially be added to expand the services it provides. Finally, blue objectives are quality of life improvements that will be implemented only if the quality of the system has been thoroughly tested and time allows for their development.\\
+\begin{table}[htb]
+\begin{tabular}{|l|l|}
+\hline
+\rowcolor[HTML]{38FFF8} 
+\multicolumn{2}{|c|}{\cellcolor[HTML]{38FFF8}\textbf{Objectives}}                                \\ \hline
+\multicolumn{1}{|c|}{\textbf{Server}}        & \multicolumn{1}{c|}{\textbf{Desktop/Mobile}}      \\ \hline
+\rowcolor[HTML]{32CB00} 
+Set up Mode.js app                           & Set up Electron/Ionic app                         \\ \hline
+\rowcolor[HTML]{32CB00} 
+Receive \& save a file through HTTP          & Create the GUI                                    \\ \hline
+\rowcolor[HTML]{F8FF00} 
+Check for conflicts of a file being uploaded & \cellcolor[HTML]{32CB00}Show files in a local dir \\ \hline
+\rowcolor[HTML]{F8FF00} 
+Send file information through HTTP           & Request file information from server              \\ \hline
+\rowcolor[HTML]{F8FF00} 
+Send latest file version through HTTP        & Push file changes to server                       \\ \hline
+\rowcolor[HTML]{F8FF00} 
+Deal with possible conflicts                 & Pull outdated files from server                   \\ \hline
+\rowcolor[HTML]{FD6864} 
+Implement different users                    & GUI and functionality for multiple users          \\ \hline
+\rowcolor[HTML]{3166FF} 
+Implement permissions amongst users          & Allow users to give permissions                   \\ \hline
+\end{tabular}
+\caption{Color-Coded Objectives}
+\end{table} 
+
 	\subsection{Proposed Approach}
+	Our approach is to create a server with its database, a desktop application and a mobile application and connect them as shown in Figure 1. 
+To set up the server we plan to utilize the framework “Express.js” and therefore “Node.js” in general. One of “Node.js” main advantages is that by default it queues the inputs and that can help us deal with potential file conflicts from multiple users’ requests in the same time period. Furthermore, our client application will use Node.js as well, so another obvious advantage is the easier connectivity between server and client. Finally, another major advantage is that our database will be implemented with “MongoDB”. “MongoDB” is a NoSQL database and Node.js nullifies the need to modulate syntax differences during the server-database communication. We plan to build our desktop application utilizing the framework “Electron” because it can produce cross-platform applications and moreover uses “Chromium”. This results in easier creation of the application and GUI using HTML, CSS and JavaScript. The proposed approach is concluded with the mobile application which will be developed using “Ionic”.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.7]{ProjectDiagram.png}
+\caption{Project Diagram}
+\end{figure}
 	\subsection{Timetable \& Initial Progress}
+	After the first week meeting, which was dedicated to form a plan and develop our approach, we decided on scheduling the work in 2-week Sprints, using the Scrum methodology, explained in more detail in Chapter 2.1. The full schedule can be seen in Table 2 and includes all the objectives, time for testing and preparing the final report and presentation, as well as some contingency allowance in case our plans are inaccurate to some extent. As of right now we have completed all the objectives of Sprint1 and…………………….so we are ahead of schedule.\\
+	\begin{table}[]
+\begin{tabular}{|c|l|}
+\hline
+\multicolumn{2}{|c|}{\cellcolor[HTML]{38FFF8}\textbf{Timetable}}           \\ \hline
+\textbf{Date} & \multicolumn{1}{c|}{\textbf{Description}}                  \\ \hline
+17/1 - 23/1   & Planning and Initial Task Delegation                                                   \\ \hline
+24/1 - 6/2    & Sprint1: Green + Yellow(As many as possible)               \\ \hline
+7/2 - 21/2    & Sprint2: Remaining Yellow + Red(optional)                  \\ \hline
+22/2 - 6/3    & Sprint3: Remaining Yellow + Red(optional)                  \\ \hline
+7/3 - 27/3    & Testing, Final Report, Presentation, Contingency allowance \\ \hline
+\end{tabular}
+\caption{Project Timetable}
+\end{table}
 \section{Project Organisation}
 	\subsection{Project Methodology}
 	\subsection{Peer Assessment \& Conflict Handling}
