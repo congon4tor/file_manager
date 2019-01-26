@@ -1,6 +1,18 @@
 # Documentation for file_manager server API
-***
-## 1. Push file changes
+
+## 1. Get file information
+
+### Description
+This function is used by the client when they want the latest information about the files stored in the server so they can update their views to show the user the current state of their files.
+
+### Request
+* Method: GET
+* Parameters: None
+
+### How it works
+This function returns a JSON with a boolean `success` and a JSON array `files` which contains all the file information. If there are no files, `files` will be `[]`. In case of an error the server will respond with the appropriate HTTP error code and a JSON with `success` and a message `error` describing what the error was.
+
+## 2. Push file changes
 
 ### Description
 This function is used by the clients when they want to save the changes made to a file in their local machine. this includes creation of new files, modification of existing files and deletion of existing files. In the case of modification or deletion of the file, the file must be in the last version. If it is not the last version it will return an error indicationg a conflict.
@@ -21,5 +33,3 @@ If `file` is passed the filename of that file will be checked to see if there is
 
 If `file` was not passed the `delete` parameter will be checked to see if the client wants to delete a file. If it not equal to "true" the server will respond with an error indicating that the user did not include `file`. If `delete` is "true" the server will check if there is information of a file with filename equal to `filename` and if `version` is the last version. If there is information will be deleted from the database and the file deleted from the directory. A response will be sent indicating if the file was deleted successfully. 
 
-***
-## 2.
