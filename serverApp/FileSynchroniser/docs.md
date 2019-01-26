@@ -6,6 +6,7 @@
 This function is used by the client when they want the latest information about the files stored in the server so they can update their views to show the user the current state of their files.
 
 ### Request
+* Route: /file/getInfo
 * Method: GET
 * Parameters: None
 
@@ -18,6 +19,7 @@ This function returns a JSON with a boolean `success` and a JSON array `files` w
 This function is used by the clients when they want to save the changes made to a file in their local machine. this includes creation of new files, modification of existing files and deletion of existing files. In the case of modification or deletion of the file, the file must be in the last version. If it is not the last version it will return an error indicationg a conflict.
 
 ### Request
+* Route: /file/push
 * Method: POST 
 * Parameters: 
 
