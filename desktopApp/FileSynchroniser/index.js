@@ -1,10 +1,13 @@
 const { app, BrowserWindow, Menu, MenuItem, dialog, ipcMain, globalShortcut } = require('electron');
 const fs = require('fs');
 const request = require('request');
+const util = require('util');
 
 let win;
 let File = require('./src/models/file.js');
 let configuration = require('./config/configuration.js');
+
+const get = util.promisify(request.get);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //create browserwindow
@@ -59,7 +62,7 @@ app.on('ready', boot);
 function stat(path, file) {
 	return new Promise((resolve, reject) => {
 		//determine what OS is running on to add back or slash
-		path += (process.platform == 'darwin' ? '/' : '\\');
+		path += (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/');
 		//read each file
 		fs.stat(path + file, (err, stats) => {
 			if (err) {
@@ -79,43 +82,24 @@ function stat(path, file) {
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+async function getServerFiles() {
+	const serverFiles = await get(`${configuration.getServerFilesURL}`);
+	return serverFiles;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //First get all server files. Then iterate through each file in the OS folder to create the view 
 async function readEverything(path, localFiles) {
 	try {
-		//first get all server files in order to combine and show all relevant info 
-		request.get(`${configuration.getServerFilesURL}`,
-			//this will run when we get all server files. 
-			async function (error, response, body) {
-				if (!error && response.statusCode == 200) {
-					var jsonObj = JSON.parse(body);
-					let serverFiles = jsonObj.files;
-					////////////////////////////////////////////////////MISSING LOGIC HERE
-					//now we have all 'serverFiles' from server and all 'localFiles' from OS foler so we can create the view to show 
-					var filesView = [];
-					for (let localFile of localFiles) {
-						//for every file call the fs.stat
-						let file = await stat(path, localFile);
-						//POPULATE THE VERSION FOR EVERY FILE 
-						file.setVersion(1);
-						filesView.push(file);
-					}
-					//return the files array to show on screen!!
-					return filesView;
-					/////////////////////////////////////////////////////
-				}
-				if (error) {
-					//this is the error from the api call 
-					dialog.showMessageBox(win, {
-						type: 'error',
-						buttons: ['OK'],
-						title: 'Error',
-						message: 'readEverything():Error while reading server files:' + (!error ? response.statusCode : '') + ' ' + error
-					});
-				}
-			}
-		);
+		var filesView = [];
+		for (let localFile of localFiles) {
+			//for every file call the fs.stat
+			let file = await stat(path, localFile);
+			//POPULATE THE VERSION FOR EVERY FILE 
+			file.setVersion(1);
+			filesView.push(file);
+		}
+		return filesView;
 	} catch (error) {
-		//this is the error from the callback function
 		throw new Error('readEverything():' + error);
 	}
 }
@@ -136,8 +120,8 @@ function readDirectory(path) {
 //read the directory
 async function readAsync(path) {
 	try {
-		const a = await readDirectory(path);
-		return a;
+		const dirFiles = await readDirectory(path);
+		return dirFiles;
 	} catch (error) {
 		dialog.showMessageBox(win, {
 			type: 'error',
@@ -151,15 +135,27 @@ async function readAsync(path) {
 //deal with load file directory menu option
 function loadDirectory(path) {
 	try {
-		//first we will call the api to get the files from the server, then we will read the OS folder to combine the data and create the view  
+		//first we will read the OS folder then we will call the api to get the files from the server and then combine the data and create the view  
 		readAsync(path).then((files) => {
 			//then get stats for all files
-			readEverything(path, files).then((jsonObj) => { win.webContents.send('files', JSON.stringify(jsonObj)) }).catch(function (error) {
+			readEverything(path, files).then((filesView) => {
+				getServerFiles().then((serverFiles) => {
+					////////////////////////////////////////////////////HERE I HAVE BOTH FILES LISTS
+					win.webContents.send('files', JSON.stringify(filesView))
+				}).catch(function (error) {
+					dialog.showMessageBox(win, {
+						type: 'error',
+						buttons: ['OK'],
+						title: 'Error',
+						message: 'loadDirectory():getServerFiles():' + error
+					});
+				});
+			}).catch(function (error) {
 				dialog.showMessageBox(win, {
 					type: 'error',
 					buttons: ['OK'],
 					title: 'Error',
-					message: 'rendererOnPath():readEverything():' + error
+					message: 'loadDirectory():readEverything():' + error
 				});
 			});
 		}).catch(function (error) {
@@ -167,7 +163,7 @@ function loadDirectory(path) {
 				type: 'error',
 				buttons: ['OK'],
 				title: 'Error',
-				message: 'rendererOnPath():readAsync():' + error
+				message: 'loadDirectory():readAsync():' + error
 			});
 		});
 	} catch (error) {
