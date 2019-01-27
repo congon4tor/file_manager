@@ -15,6 +15,25 @@ router.use(fileUpload({
     preserveExtension: true
 }));
 
+//getFileInfo send the client a JSON with updated info about files
+router.get('/getInfo', (req, res)=> {
+    //Look for all the files in the database
+    File.find((err, files)=>{
+        if (err) {
+            console.error(err);
+            return res.status(500).send({success: false, error: "Error searching files in the database"});
+        }
+        //This if is not needed as files will be [] if no files exist so else will never be executed
+        if(files){ //check if there are files 
+            console.log(files);
+            res.send({success: true, files: files});
+        }else{ //there are no files
+            res.send({success: true, files: null});
+        }
+    });
+});
+
+
 //Push recives
 router.post('/push', (req, res)=> {
     //Check if there are files in the request
