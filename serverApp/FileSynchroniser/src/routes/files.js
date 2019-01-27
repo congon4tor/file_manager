@@ -171,4 +171,28 @@ router.post('/push', (req, res)=> {
     }
 });
 
+//getFile recive filename from client respond with file
+router.get('/getFile', (req, res)=> {
+    //Look for the file with the specified filename in the database
+    File.findOne({filename: req.query.filename}, (err, file)=>{
+        if (err) {
+            console.error(err);
+            return res.status(500).send({success: false, error: "Error searching files in the database"});
+        }
+        if(file){ //check if file exists
+            // res.sendFile(file.path,{dotfiles:"allow"},(err)=>{ sends file content
+            // Sends file to the client allow dotfiles means hidden files are allowed to be downloaded
+            res.download(file.path, file.filename, {dotfiles:"allow"}, (err)=>{
+                if(err){
+                    console.error(err);
+                    return res.status(500).send({success: false, error: "Error transfering the file"});
+                }
+            });
+        }else{ //file not found
+            return res.status(400).send({success: false, error: "Error file not found in the database"});
+        }
+    });
+});
+
+
 module.exports = router;
