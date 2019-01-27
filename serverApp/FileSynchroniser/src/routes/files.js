@@ -169,7 +169,7 @@ router.get('/getFile', (req, res)=> {
                     return res.status(500).send({success: false, error: "Error transfering the file"});
                 }
             });
-        }else{ //there are no files
+        }else{ //file not found
             return res.status(400).send({success: false, error: "Error file not found in the database"});
         }
     });
