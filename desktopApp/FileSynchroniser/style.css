@@ -5,6 +5,10 @@
     max-width: 100%;
 }
 
+.alert:empty {
+    display: none !important;
+ }
+
 ul {
     list-style-type: none;
     }
