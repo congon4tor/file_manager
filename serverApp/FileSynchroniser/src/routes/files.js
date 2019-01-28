@@ -24,8 +24,7 @@ router.get('/getInfo', (req, res)=> {
             return res.status(500).send({success: false, error: "Error searching files in the database"});
         }
         //This if is not needed as files will be [] if no files exist so else will never be executed
-        if(files){ //check if there are files 
-            console.log(files);
+        if(files){ //check if there are files
             res.send({success: true, files: files});
         }else{ //there are no files
             res.send({success: true, files: null});
@@ -74,6 +73,7 @@ router.post('/push', (req, res)=> {
                                 file.version++;
                                 file.hash = userFileHash;
                                 file.date = new Date();
+                                file.size = userFile.data.byteLength;
                                 //Save file info to DB
                                 file.save((err, savedFile) => {
                                     if (err) {
@@ -110,6 +110,7 @@ router.post('/push', (req, res)=> {
                         hash.update(userFile.data);
                         newFile.hash = hash.digest('hex');
                         newFile.date = new Date();
+                        newFile.size = userFile.data.byteLength;
                         newFile.path = path.join(global.fileDirectory, userFile.name);
                         //Save file info to DB
                         newFile.save((err, savedFile) => {
