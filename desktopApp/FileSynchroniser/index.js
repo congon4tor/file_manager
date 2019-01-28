@@ -1,14 +1,19 @@
-const { app, BrowserWindow, Menu, MenuItem, dialog, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const fs = require('fs');
 const request = require('request');
 const util = require('util');
 
+//browser window
 let win;
+//model of file 
 let File = require('./src/models/file.js');
+//config file with api call strings
 let configuration = require('./config/configuration.js');
-
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Promisify the request get in order to return promise and not pass callback to it 
 const get = util.promisify(request.get);
-
+//
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //create browserwindow
 let boot = () => {
@@ -70,11 +75,11 @@ function stat(path, file) {
 			} else {
 				var fileObj;
 				if (stats.isDirectory()) {
-					fileObj = new File(file, `${path}${file}`, true, true, 0, '', '', 0);
+					fileObj = new File(file, `${path}${file}`, true, true, 0, '', '', 1);
 				}
 				else {
-					//if it is not a directory get some stats more and change the icon
-					fileObj = new File(file, `${path}${file}`, false, false, stats.size, stats.mtimeMs, stats.birthtimeMs, 0);
+					//if it is not a directory get some more stats and change the icon
+					fileObj = new File(file, `${path}${file}`, false, false, stats.size, stats.mtimeMs, stats.birthtimeMs, 1);
 				}
 				resolve(fileObj);
 			}
@@ -82,25 +87,25 @@ function stat(path, file) {
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//call api to get server files 
 async function getServerFiles() {
 	const serverFiles = await get(`${configuration.getServerFilesURL}`);
 	return serverFiles;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //First get all server files. Then iterate through each file in the OS folder to create the view 
-async function readEverything(path, localFiles) {
+async function statFiles(path, localFiles) {
 	try {
-		var filesView = [];
+		var filesDetails = [];
 		for (let localFile of localFiles) {
 			//for every file call the fs.stat
 			let file = await stat(path, localFile);
 			//POPULATE THE VERSION FOR EVERY FILE 
-			file.setVersion(1);
-			filesView.push(file);
+			filesDetails.push(file);
 		}
-		return filesView;
+		return filesDetails;
 	} catch (error) {
-		throw new Error('readEverything():' + error);
+		throw new Error('statFiles():' + error);
 	}
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,10 +143,28 @@ function loadDirectory(path) {
 		//first we will read the OS folder then we will call the api to get the files from the server and then combine the data and create the view  
 		readAsync(path).then((files) => {
 			//then get stats for all files
-			readEverything(path, files).then((filesView) => {
+			statFiles(path, files).then((localFiles) => {
 				getServerFiles().then((serverFiles) => {
-					////////////////////////////////////////////////////HERE I HAVE BOTH FILES LISTS
-					win.webContents.send('files', JSON.stringify(filesView))
+					///////////////////////////////////////////////////////////////////HERE I HAVE BOTH FILES LISTS
+					serverFilesArray = JSON.parse(serverFiles.body).files;
+					var filesView = [];
+					let flag = false;
+					for (let serverFile in serverFilesArray) {
+						for (let localFile in localFiles) {
+							if (serverFilesArray[serverFile].filename === localFiles[localFile].filename) {
+								flag = true;
+								break;
+							}
+						}
+						if (!flag) {
+							fileObj = new File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, false, false, 0, serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
+							filesView.push(fileObj);
+						}
+						flag = false;
+					}
+					totalFiles = localFiles.concat(filesView);
+					///////////////////////////////////////////////////////////////////
+					win.webContents.send('files', JSON.stringify(totalFiles))
 				}).catch(function (error) {
 					dialog.showMessageBox(win, {
 						type: 'error',
@@ -155,7 +178,7 @@ function loadDirectory(path) {
 					type: 'error',
 					buttons: ['OK'],
 					title: 'Error',
-					message: 'loadDirectory():readEverything():' + error
+					message: 'loadDirectory():statFiles():' + error
 				});
 			});
 		}).catch(function (error) {
