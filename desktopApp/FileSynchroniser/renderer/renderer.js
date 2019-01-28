@@ -33,8 +33,11 @@ function fileTemplate(data) {
     else
         string =
             `<tr id="${data.theID}">
-                <td ondblclick="synchronizeFile(this.parentNode.id)"><i class="fas fa-sync"></td>
-                <td id="${data.theID}status">${data.isSync ? `<i style="color:green" class="fas fa-check"></i>` : `<i style="color:red" class="fas fa-times"></i>`}</td>
+                ${data.isSync == 2 ? `<td id="${data.filename}" ondblclick="downloadFile(this.id)"><i class="fas fa-download"></i></td>` :
+                data.isSync == 1 ? `<td></td>` : `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-sync"></td>`}               
+                <td id="${data.theID}status">${data.isSync == 1 ? ` <i style="color:green" class="fas fa-check"></i>` :
+                data.isSync == 2 ? `<i style="color:blue" class="fas fa-cloud"></i>` :
+                    data.isSync == 3 ? `<i style="color:red" class="fas fa-times"></i>` : `<i style="color:grey" class="fas fa-laptop"></i>`}</td>
                 <td ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
                 <td> ${data.size}</td>
                 <td id="${data.theID}lastSync"></td>
@@ -42,13 +45,23 @@ function fileTemplate(data) {
     return string;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-function updateDetails(size, fileName) {
-    document.getElementById('size').innerHTML = size;
-    document.getElementById('fileName').innerHTML = fileName;
+function downloadFile(filename) {
+    ipcRenderer.send('downloadFile', filename);
+    //receive result from file download from main process to renderer
+    ipcRenderer.on('downloadFileResult', (event, result) => {
+        storage.get('path', function (error, data) {
+            if (error) throw error;
+            document.getElementById(`${data.path}${filename}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
+            document.getElementById(`${data.path}${filename}lastSync`).innerHTML = ``;
+        })
+    })
+    ipcRenderer.on('downloadFileResult:error', (event, data) => {
+        document.getElementById('failure-alert').innerHTML = `<h3>Error:${data}</h3>`;
+    })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function synchronizeFile(path) {
-    ipcRenderer.send('synchronizeFile', path);
+function synchronizeFile(path, filename) {
+    ipcRenderer.send('synchronizeFile', path, filename);
     //receive result from file synchronization from main process to renderer
     ipcRenderer.on('synchronizeFileResult', (event, result) => {
         var myObj = JSON.parse(result);

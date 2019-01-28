@@ -1,6 +1,10 @@
 var File = function (filename, theID, isSync, isDir, size, lastModified, creationTime, version) {
     this.filename = filename;
     this.theID = theID;
+    //0 - exists on local but not on server
+    //1 - exists on local and server and has same version
+    //2 - exists only on server 
+    //3 - exists on local and server and has different version
     this.isSync = isSync;
     this.isDir = isDir;
     this.size = size;
