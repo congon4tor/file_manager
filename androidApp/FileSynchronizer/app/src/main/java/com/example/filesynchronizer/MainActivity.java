@@ -15,7 +15,9 @@ import java.io.File;
 import android.os.Environment;
 import android.util.Log;
 import android.Manifest;
-
+import com.android.volley.toolbox.*;
+import com.android.volley.*;
+import org.json.JSONObject;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -29,16 +31,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String[] permissions={Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        String[] permissions={Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.INTERNET};
 
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[0]) == PackageManager.PERMISSION_GRANTED &&   //check weather the app has permissions to read/write on the phone storage
-                ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[1]) == PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[1]) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[2]) == PackageManager.PERMISSION_GRANTED
+        ) {
             readFiles();  //read files from the default storage
+            //makeRequest();
+            makeRequest2();
         }
 
         else {
             ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);  //ask permission from user to access phone storage
             readFiles();
+            //makeRequest();
+            makeRequest2();
+
         }
     }
 
@@ -67,6 +76,52 @@ public class MainActivity extends AppCompatActivity {
 
         fileList.setAdapter(fileAdapter);                 //set the adapter on the ListView
 
+    }
+
+    public void makeRequest(){
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url = "http://10.0.2.2:3000/file/getInfo";
+
+// Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // Display the first 500 characters of the response string.
+                        Log.d("Response is: ", response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("error","That didn't work!");
+            }
+        });
+
+// Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
+
+    public void makeRequest2(){
+        String url = "http://10.0.2.2:3000/file/getInfo";
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("Response: " , response.toString());
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("error","That didn't work!");
+
+                    }
+                });
+
+// Access the RequestQueue through your singleton class.
+        HTTPHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
 
 
