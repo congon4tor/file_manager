@@ -4,4 +4,6 @@
     <string name="file_details">File Details</string>
     <string name="last_modified">Last Modified:</string>
     <string name="size">Size:</string>
+    <string name="file">TextView</string>
+    <string name="todo">TODO</string>
 </resources>
