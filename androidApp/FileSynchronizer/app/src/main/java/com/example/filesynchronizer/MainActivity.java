@@ -39,14 +39,14 @@ public class MainActivity extends AppCompatActivity {
         ) {
             readFiles();  //read files from the default storage
             //makeRequest();
-            makeRequest2();
+            makeRequest();
         }
 
         else {
             ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);  //ask permission from user to access phone storage
             readFiles();
             //makeRequest();
-            makeRequest2();
+            makeRequest();
 
         }
     }
@@ -78,30 +78,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     public void makeRequest(){
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url = "http://10.0.2.2:3000/file/getInfo";
-
-// Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        Log.d("Response is: ", response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("error","That didn't work!");
-            }
-        });
-
-// Add the request to the RequestQueue.
-        queue.add(stringRequest);
-    }
-
-    public void makeRequest2(){
         String url = "http://10.0.2.2:3000/file/getInfo";
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
