@@ -17,13 +17,18 @@ import android.util.Log;
 import android.Manifest;
 import com.android.volley.toolbox.*;
 import com.android.volley.*;
-import org.json.JSONObject;
+import org.json.*;
 
 
 public class MainActivity extends AppCompatActivity {
 
     ListView fileList;
     ArrayList<String> fileNames;
+    ArrayList<String> serverNames;
+    //ArrayList<String> localList;
+    //ArrayList<String> serverList;
+   // ArrayList<String> bothList;
+    ArrayList<FileStatus> statusList;
 
 
     @Override
@@ -37,20 +42,27 @@ public class MainActivity extends AppCompatActivity {
                 ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[1]) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[2]) == PackageManager.PERMISSION_GRANTED
         ) {
-            readFiles();  //read files from the default storage
-            //makeRequest();
-            makeRequest();
+            displayFiles();
+
         }
 
         else {
             ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);  //ask permission from user to access phone storage
-            readFiles();
-            //makeRequest();
-            makeRequest();
+            displayFiles();
 
         }
     }
 
+
+    public void displayFiles(){
+        fileList = (ListView) findViewById(R.id.fileList); //create the ListView to display the file names
+
+        readFiles();
+        readFilesFromServer();
+        //getLists();
+        //FileAdapter fileAdapter = new FileAdapter();      //create the adapter
+        //fileList.setAdapter(fileAdapter);
+    }
     public void readFiles(){
         fileNames = new ArrayList<>();    //list with the file's name
         String path = Environment.getExternalStorageDirectory().toString();    //get the path to the phone storage
@@ -67,27 +79,37 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
-        fileList = (ListView) findViewById(R.id.fileList);       //create the ListView to display the file names
-
-
-
-        FileAdapter fileAdapter = new FileAdapter();      //create the adapter
-
-        fileList.setAdapter(fileAdapter);                 //set the adapter on the ListView
+               //set the adapter on the ListView
 
     }
 
 
-    public void makeRequest(){
+    public void readFilesFromServer(){
         String url = "http://10.0.2.2:3000/file/getInfo";
+        serverNames=new ArrayList<>();
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
                     @Override
                     public void onResponse(JSONObject response) {
-                        Log.d("Response: " , response.toString());
+                        //Log.d("Response: " , response.toString());
+
+
+                        try {
+                            for (int i=0;i<response.getJSONArray("files").length();i++)
+                                serverNames.add(response.getJSONArray("files").getJSONObject(i).get("filename").toString());
+                            Log.d("GETOUTSIDE",serverNames.toString());
+
+                            //////// this is a temporary solution
+                            getLists();
+                            FileAdapter fileAdapter = new FileAdapter();      //create the adapter
+                            fileList.setAdapter(fileAdapter);
+                            /////////////////
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }, new Response.ErrorListener() {
 
@@ -98,8 +120,42 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-// Access the RequestQueue through your singleton class.
-        HTTPHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);
+
+        HTTPHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);  // Access the RequestQueue through your singleton class.
+    }
+
+    public boolean checkExistence(String fileName, ArrayList<String> fileNameList){
+        for (int i=0;i<fileNameList.size();i++)
+            if (fileName.equals(fileNameList.get(i)))
+                return true;
+
+         return false;
+
+
+    }
+
+    public void getLists(){
+        //localList=new ArrayList<>();
+       // serverList= new ArrayList<>();
+       // bothList= new ArrayList<>();
+
+        // 1: local file
+        // 2: server file
+        // 3: both file
+
+        statusList=new ArrayList<>();
+
+        for (int i=0;i<fileNames.size();i++)
+            if (checkExistence(fileNames.get(i),serverNames) == true)
+                statusList.add(new FileStatus(fileNames.get(i),3));
+            else
+                statusList.add(new FileStatus(fileNames.get(i),1));
+
+        for (int i=0;i<serverNames.size();i++)
+            if (checkExistence(serverNames.get(i),fileNames) == false)
+                statusList.add(new FileStatus(serverNames.get(i),2));
+
+
     }
 
 
@@ -108,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return fileNames.size();
+            return statusList.size();
         }
 
         @Override
@@ -125,8 +181,39 @@ public class MainActivity extends AppCompatActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             convertView=getLayoutInflater().inflate(R.layout.file_list_layout,null);
             TextView fileView= (TextView) convertView.findViewById(R.id.file);
-            fileView.setText(fileNames.get(position));
+            ImageView updated=(ImageView) convertView.findViewById(R.id.updated);
+            ImageView online=(ImageView) convertView.findViewById(R.id.online);
+            ImageView local=(ImageView) convertView.findViewById(R.id.local);
+
+            fileView.setText(statusList.get(position).name);
+
+            if (statusList.get(position).status==1)
+                local.setVisibility(View.VISIBLE);
+            else
+                if (statusList.get(position).status==2)
+                    online.setVisibility(View.VISIBLE);
+                else
+                    if (statusList.get(position).status==3)
+                        updated.setVisibility(View.VISIBLE);
+
+
             return convertView;
+        }
+    }
+
+    class FileStatus{
+        public String name;
+        public int status;
+
+        FileStatus(String name, int status){
+            this.name=name;
+            this.status=status;
+        }
+
+
+        @Override
+        public String toString() {
+            return name + "  " + status;
         }
     }
 }
