@@ -36,7 +36,7 @@ let boot = () => {
 		}
 	})
 	win.loadURL(`file://${__dirname}/index.html`)
-	//win.webContents.openDevTools();
+	// win.webContents.openDevTools();
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var menu = Menu.buildFromTemplate([
@@ -51,7 +51,7 @@ var menu = Menu.buildFromTemplate([
 						properties: ['openDirectory']
 					}, function (files) {
 						if (files) {
-							storage.set('path', { path: files[0] }, function (error) {
+							storage.set('path', { path: files[0] + (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') }, function (error) {
 								if (error) throw error;
 							});
 							loadDirectory(files[0])
@@ -89,7 +89,7 @@ function stat(path, file) {
 				}
 				else {
 					//if it is not a directory get some more stats and change the icon IS SYNC ON BEGIN IS 0 (FILE EXISTS ON DESKTOP) FOR EVERY FILE
-					fileObj = new File(file, `${path}${file}`, 0, false, stats.size, stats.mtimeMs, stats.birthtimeMs, 1);
+					fileObj = new File(file, `${path}${file}`, 0, false, (stats.size/1024).toFixed(1), stats.mtimeMs, stats.birthtimeMs, 1);
 					storage.set(file, { filename: file, version: 1 }, function (error) {
 						if (error) throw error;
 					});
@@ -99,6 +99,34 @@ function stat(path, file) {
 		});
 	});
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//check if file exists or not!
+function checkExistence(path) {
+	return fs.existsSync(path) ? true : false;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ipcMain.on('checkExistence', async (event, path) => {
+	try {
+		var exists = checkExistence(path);
+		if (!exists) {
+			dialog.showMessageBox(win, {
+				type: 'warning',
+				buttons: ['OK'],
+				title: 'Warning',
+				message: 'checkExistence():File does not exist. Maybe you have to download it first'
+			});
+		}
+		win.webContents.send('checkExistence', exists)
+	} catch (error) {
+		dialog.showMessageBox(win, {
+			type: 'error',
+			buttons: ['OK'],
+			title: 'Error',
+			message: 'checkExistence():fs.existsSync():' + error
+		});
+		win.webContents.send('checkExistence:error', error)
+	}
+})
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //call api to get server files 
 async function getServerFiles() {
@@ -127,7 +155,7 @@ function readDirectory(path) {
 	return new Promise((resolve, reject) => {
 		fs.readdir(path, (err, files) => {
 			if (err) {
-				reject(new Error('readDirectory():fs.readdir():Something went wrong'))
+				reject(new Error('readDirectory():fs.readdir():'+err))
 			} else {
 				resolve(files);
 			}
@@ -179,7 +207,7 @@ function loadDirectory(path) {
 						}
 						if (!flag) {
 							//HERE WE ADD FILES THAT ARE ON SERVER BUT NOT ON LOCAL FOLDER 
-							fileObj = new File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, 2, false, 0, serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
+							fileObj = new File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, 2, false, (serverFilesArray[serverFile].size/1024).toFixed(1), serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
 							filesView.push(fileObj);
 						}
 						flag = false;
@@ -249,6 +277,7 @@ ipcMain.on('synchronizeFile', async (event, path, filename) => {
 							title: 'Error',
 							message: 'synchronizeFile():' + (!error ? response.statusCode : '') + ' ' + error
 						});
+						win.webContents.send('synchronizeFileResult:error', (!error ? response.statusCode : '') + ' ' + error)
 					}
 				}
 			);
@@ -275,10 +304,8 @@ ipcMain.on('downloadFile', async (event, filename) => {
 			storage.set(filename, { filename: filename, version: 1 }, function (error) {
 				if (error) throw new Error('downloadFile():Error updating storage');
 			});
-			///////////////////error
-			console.log('--------------sending!!!')
-			win.webContents.send('downloadFileResult', 'success');
-			console.log('--------------sent')
+			var file = new File(filename, `${data.path}`, 1, false, 0, '', '', 1);
+			win.webContents.send('downloadFileResult', file);
 		})
 	} catch (error) {
 		dialog.showMessageBox(win, {

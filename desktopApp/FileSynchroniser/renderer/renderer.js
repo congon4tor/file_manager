@@ -1,5 +1,6 @@
 const { ipcRenderer } = require('electron');
 const { shell } = require('electron');
+const storage = require('electron-json-storage');
 
 // hide warning regarding Content Security Policy https://developer.chrome.com/extensions/contentSecurityPolicy
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
@@ -15,8 +16,16 @@ ipcRenderer.on('files:error', (event, data) => {
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function openFile(path) {
-    //open any file with default OS program 
-    shell.openItem(path);
+    ipcRenderer.send('checkExistence', path);
+    //receive result from file download from main process to renderer
+    ipcRenderer.on('checkExistence', (event, exists) => {
+        if (exists) {
+            shell.openItem(path);
+        }
+    })
+    ipcRenderer.on('checkExistence:error', (event, result) => {
+        console.log('error');
+    })
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 function fileTemplate(data) {
@@ -33,7 +42,7 @@ function fileTemplate(data) {
     else
         string =
             `<tr id="${data.theID}">
-                ${data.isSync == 2 ? `<td id="${data.filename}" ondblclick="downloadFile(this.id)"><i class="fas fa-download"></i></td>` :
+                ${data.isSync == 2 ? `<td id="${data.filename}" ondblclick="downloadFile(this.parentNode.id,this.id)"><i class="fas fa-download"></i></td>` :
                 data.isSync == 1 ? `<td></td>` : `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-sync"></td>`}               
                 <td id="${data.theID}status">${data.isSync == 1 ? ` <i style="color:green" class="fas fa-check"></i>` :
                 data.isSync == 2 ? `<i style="color:blue" class="fas fa-cloud"></i>` :
@@ -45,14 +54,18 @@ function fileTemplate(data) {
     return string;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-function downloadFile(filename) {
+function downloadFile(path, filename) {
     ipcRenderer.send('downloadFile', filename);
     //receive result from file download from main process to renderer
     ipcRenderer.on('downloadFileResult', (event, result) => {
         storage.get('path', function (error, data) {
             if (error) throw error;
-            document.getElementById(`${data.path}${filename}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
-            document.getElementById(`${data.path}${filename}lastSync`).innerHTML = ``;
+            //remove all the row first 
+            var element = document.getElementById(path);
+            element.parentNode.removeChild(element);
+            //then add the new updated row that can now be clicked to open the file 
+            var table = document.getElementById('display-files');
+            table.innerHTML += fileTemplate(result);
         })
     })
     ipcRenderer.on('downloadFileResult:error', (event, data) => {
