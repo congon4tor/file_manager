@@ -29,6 +29,11 @@ var fileSchema = mongoose.Schema({
     date: {
         type: Date,
         required: true
+    },
+    //Size in Bytes of the file
+    size: {
+        type: Number,
+        required: true
     }
 
 });
