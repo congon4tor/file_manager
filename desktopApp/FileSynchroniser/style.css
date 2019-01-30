@@ -5,9 +5,9 @@
     max-width: 100%;
 }
 
-.alert:empty {
-    display: none !important;
- }
+body{
+    margin:30px;
+}
 
 ul {
     list-style-type: none;
@@ -85,5 +85,25 @@ label {
     margin-bottom: 0rem; 
 }
 
+.synchronize {
+    background-color : blue;
+    padding: 15px 20px;
+    line-height: 1.33;
+    border-radius: 100%;
+  }
+  
+  #syncButton {
+    position: fixed;
+    bottom: 14px;
+    right: 10px;
+  }
 
+.alert-bottom{
+    position: fixed;
+    bottom: 5px;
+    left:2%;
+}
 
+.alert{
+    display: none;
+}

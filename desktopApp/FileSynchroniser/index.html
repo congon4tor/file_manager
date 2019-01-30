@@ -17,22 +17,23 @@
 </head>
 
 <body>
-    <br />
-    <div id="listed-files" class="table-responsive">
-        <table id="display-files-table" style="width:100%" class="table table-striped">
-            <tbody id="display-files">
-            </tbody>
-        </table>
-    </div>
-    <div class="clearfix visible-xs-block"></div>
-    <div class="row">
-        <div class="col-xs-6 col-sm-6">
+    <div class="fullscreen">
+        <div class="alert-bottom alert alert-success">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            <strong>Success!</strong> Indicates a successful or positive action.
+        </div>
+        <div id="listed-files" class="table-responsive">
+            <table id="display-files-table" style="width:100%" class="table table-striped">
+                <thead id="display-files-header">
+                </thead>
+                <tbody id="display-files">
+                </tbody>
+            </table>
+        </div>
+        <div id="syncButton">
+            <button class="btn btn-info synchronize" onclick="refreshScreen()"><i class="fas fa-sync"></i></button>
         </div>
     </div>
-    </div>
-    <div id="success-alert" class="alert alert-success"></div>
-    <div id="failure-alert" class="alert alert-danger"></div>
-    <script src="./assets/js/script.js"></script>
 </body>
 
 </html>

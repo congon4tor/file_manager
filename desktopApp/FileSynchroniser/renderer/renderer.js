@@ -1,5 +1,4 @@
 const { ipcRenderer } = require('electron');
-const { shell } = require('electron');
 const storage = require('electron-json-storage');
 
 // hide warning regarding Content Security Policy https://developer.chrome.com/extensions/contentSecurityPolicy
@@ -8,6 +7,14 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //get the files from main process when user clicks load directory
 ipcRenderer.on('files', (event, files) => {
+    document.getElementById('display-files-header').innerHTML =
+        `<tr>
+            <th></th>
+            <th></th>
+            <th>Filename</th>
+            <th>Size</th>
+            <th></th>
+        </tr>`;
     document.getElementById('display-files').innerHTML = `${JSON.parse(files).map(fileTemplate).join("")}`;
 })
 //if error console log it
@@ -16,15 +23,9 @@ ipcRenderer.on('files:error', (event, data) => {
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function openFile(path) {
-    ipcRenderer.send('checkExistence', path);
-    //receive result from file download from main process to renderer
-    ipcRenderer.on('checkExistence', (event, exists) => {
-        if (exists) {
-            shell.openItem(path);
-        }
-    })
-    ipcRenderer.on('checkExistence:error', (event, result) => {
-        console.log('error');
+    ipcRenderer.send('openFile', path);
+    ipcRenderer.on('openFile', (event, success) => {
+        console.log('ok');
     })
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -43,12 +44,12 @@ function fileTemplate(data) {
         string =
             `<tr id="${data.theID}">
                 ${data.isSync == 2 ? `<td id="${data.filename}" ondblclick="downloadFile(this.parentNode.id,this.id)"><i class="fas fa-download"></i></td>` :
-                data.isSync == 1 ? `<td></td>` : `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-sync"></td>`}               
+                data.isSync == 1 ? `<td></td>` : data.isSync == 3 ? `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-screwdriver"></i></td>` : `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-upload"></i></td>`}               
                 <td id="${data.theID}status">${data.isSync == 1 ? ` <i style="color:green" class="fas fa-check"></i>` :
                 data.isSync == 2 ? `<i style="color:blue" class="fas fa-cloud"></i>` :
                     data.isSync == 3 ? `<i style="color:red" class="fas fa-times"></i>` : `<i style="color:grey" class="fas fa-laptop"></i>`}</td>
                 <td ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
-                <td> ${data.size}</td>
+                <td> ${data.size} MB</td>
                 <td id="${data.theID}lastSync"></td>
                 </tr>`;
     return string;
@@ -66,10 +67,8 @@ function downloadFile(path, filename) {
             //then add the new updated row that can now be clicked to open the file 
             var table = document.getElementById('display-files');
             table.innerHTML += fileTemplate(result);
+            alert();
         })
-    })
-    ipcRenderer.on('downloadFileResult:error', (event, data) => {
-        document.getElementById('failure-alert').innerHTML = `<h3>Error:${data}</h3>`;
     })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,20 +79,19 @@ function synchronizeFile(path, filename) {
         var myObj = JSON.parse(result);
         document.getElementById(`${myObj.theID}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
         document.getElementById(`${myObj.theID}lastSync`).innerHTML = `${myObj.file.date}`;
-        document.getElementById('success-alert').innerHTML = `<h3>Success!</h3>`;
-        //use some jquery to show hide alert
-        $("#success-alert").fadeIn(1000);
-        $("#success-alert").fadeTo(6000, 500).slideUp(500, function () {
-            $("#success-alert").slideUp(500);
-        });
-    })
-    ipcRenderer.on('synchronizeFileResult:error', (event, data) => {
-        document.getElementById('failure-alert').innerHTML = `<h3>Error:${data}</h3>`;
-        //use some jquery to show hide alert
-        $("#failure-alert").fadeIn(1000);
-        $("#failure-alert").fadeTo(6000, 500).slideUp(500, function () {
-            $("#failure-alert").slideUp(500);
-        });
+        alert();
     })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function refreshScreen() {
+    ipcRenderer.send('refreshScreen', 'refresh');
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function alert() {
+    $(".alert-bottom").show();
+    setTimeout(function () {
+        $(".alert-bottom").hide();
+    }, 6000);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
