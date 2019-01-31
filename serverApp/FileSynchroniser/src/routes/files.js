@@ -17,19 +17,33 @@ router.use(fileUpload({
 
 //getFileInfo send the client a JSON with updated info about files
 router.get('/getInfo', (req, res)=> {
-    //Look for all the files in the database
-    File.find((err, files)=>{
-        if (err) {
-            console.error(err);
-            return res.status(500).send({success: false, error: "Error searching files in the database"});
-        }
-        //This if is not needed as files will be [] if no files exist so else will never be executed
-        if(files){ //check if there are files
-            res.send({success: true, files: files});
-        }else{ //there are no files
-            res.send({success: true, files: null});
-        }
-    });
+    if(req.query.filename){
+        File.findOne({ filename: req.query.filename }, (err, file)=>{
+            if (err) {
+                console.error(err);
+                return res.status(500).send({success: false, error: "Error searching the file in the database"});
+            }
+            if(file){ //check if there is a file
+                res.send({success: true, file: file});
+            }else{ //there are no files
+                res.send({success: false, file: null});
+            }
+        });
+    }else{
+        //Look for all the files in the database
+        File.find((err, files)=>{
+            if (err) {
+                console.error(err);
+                return res.status(500).send({success: false, error: "Error searching files in the database"});
+            }
+            //This if is not needed as files will be [] if no files exist so else will never be executed
+            if(files){ //check if there are files
+                res.send({success: true, files: files});
+            }else{ //there are no files
+                res.send({success: true, files: null});
+            }
+        });
+    }
 });
 
 
