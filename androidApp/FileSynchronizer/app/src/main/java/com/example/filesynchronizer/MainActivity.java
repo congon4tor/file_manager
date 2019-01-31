@@ -9,6 +9,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import android.widget.*;
 import java.io.File;
@@ -25,9 +29,6 @@ public class MainActivity extends AppCompatActivity {
     ListView fileList;
     ArrayList<String> fileNames;
     ArrayList<String> serverNames;
-    //ArrayList<String> localList;
-    //ArrayList<String> serverList;
-   // ArrayList<String> bothList;
     ArrayList<FileStatus> statusList;
 
 
@@ -43,18 +44,20 @@ public class MainActivity extends AppCompatActivity {
                 ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[2]) == PackageManager.PERMISSION_GRANTED
         ) {
             displayFiles();
+            //saveLocalFilesInfo();
 
         }
 
         else {
             ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);  //ask permission from user to access phone storage
             displayFiles();
+            //saveLocalFilesInfo();
 
         }
     }
 
 
-    public void displayFiles(){
+    /*public void displayFiles(){
         fileList = (ListView) findViewById(R.id.fileList); //create the ListView to display the file names
 
         readFiles();
@@ -62,12 +65,11 @@ public class MainActivity extends AppCompatActivity {
         //getLists();
         //FileAdapter fileAdapter = new FileAdapter();      //create the adapter
         //fileList.setAdapter(fileAdapter);
-    }
+    }*/
     public void readFiles(){
         fileNames = new ArrayList<>();    //list with the file's name
         String path = Environment.getExternalStorageDirectory().toString();    //get the path to the phone storage
         File directory = new File(path+ "/WorkingDirectory");     //set the working directory
-
         if (!directory.exists())   //if the default directory does not exist create it
             directory.mkdir();
 
@@ -84,7 +86,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void readFilesFromServer(){
+    public void displayFiles(){
+        fileList = (ListView) findViewById(R.id.fileList); //create the ListView to display the file names
+
+        readFiles();
+        //readFilesFromServer();
         String url = "http://10.0.2.2:3000/file/getInfo";
         serverNames=new ArrayList<>();
 
@@ -99,13 +105,16 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             for (int i=0;i<response.getJSONArray("files").length();i++)
                                 serverNames.add(response.getJSONArray("files").getJSONObject(i).get("filename").toString());
-                            Log.d("GETOUTSIDE",serverNames.toString());
+                            //Log.d("GETOUTSIDE",serverNames.toString());
 
                             //////// this is a temporary solution
                             getLists();
+                            saveLocalFilesInfo();
                             FileAdapter fileAdapter = new FileAdapter();      //create the adapter
                             fileList.setAdapter(fileAdapter);
                             /////////////////
+
+
 
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -158,6 +167,25 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void saveLocalFilesInfo(){
+        String message = "";
+        String fileName= "fileInfo.txt";
+
+        for (int i=0;i<statusList.size();i++)
+            if (statusList.get(i).status==1)
+                message=message+statusList.get(i).name+","+"1\n";
+
+        try {
+            FileOutputStream fileOutputStream=openFileOutput(fileName,MODE_PRIVATE);
+            fileOutputStream.write(message.getBytes());
+            fileOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
 
     //create the custom adapter to display the file names with the syn button
     class FileAdapter extends BaseAdapter{
@@ -184,17 +212,26 @@ public class MainActivity extends AppCompatActivity {
             ImageView updated=(ImageView) convertView.findViewById(R.id.updated);
             ImageView online=(ImageView) convertView.findViewById(R.id.online);
             ImageView local=(ImageView) convertView.findViewById(R.id.local);
+            ImageButton synButton=(ImageButton) convertView.findViewById(R.id.synButton);
+            ImageButton downloadButton=(ImageButton) convertView.findViewById(R.id.downloadButton);
+            ImageButton uploadButton=(ImageButton) convertView.findViewById(R.id.uploadButton);
 
             fileView.setText(statusList.get(position).name);
 
-            if (statusList.get(position).status==1)
+            if (statusList.get(position).status==1) {
                 local.setVisibility(View.VISIBLE);
+                uploadButton.setVisibility(View.VISIBLE);
+            }
             else
-                if (statusList.get(position).status==2)
+                if (statusList.get(position).status==2) {
                     online.setVisibility(View.VISIBLE);
+                    downloadButton.setVisibility(View.VISIBLE);
+                }
                 else
-                    if (statusList.get(position).status==3)
+                    if (statusList.get(position).status==3) {
                         updated.setVisibility(View.VISIBLE);
+                        synButton.setVisibility(View.VISIBLE);
+                    }
 
 
             return convertView;
@@ -208,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
         FileStatus(String name, int status){
             this.name=name;
             this.status=status;
+
         }
 
 
