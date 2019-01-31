@@ -43,7 +43,7 @@ function fileTemplate(data) {
     else
         string =
             `<tr id="${data.theID}">
-                ${data.isSync == 2 ? `<td id="${data.filename}" ondblclick="downloadFile(this.parentNode.id,this.id)"><i class="fas fa-download"></i></td>` :
+                ${data.isSync == 2 ? `<td id="${data.filename}" ondblclick="downloadFile(this.id)"><i class="fas fa-download"></i></td>` :
                 data.isSync == 1 ? `<td></td>` : data.isSync == 3 ? `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-screwdriver"></i></td>` : `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-upload"></i></td>`}               
                 <td id="${data.theID}status">${data.isSync == 1 ? ` <i style="color:green" class="fas fa-check"></i>` :
                 data.isSync == 2 ? `<i style="color:blue" class="fas fa-cloud"></i>` :
@@ -55,22 +55,19 @@ function fileTemplate(data) {
     return string;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-function downloadFile(path, filename) {
+function downloadFile(filename) {
     ipcRenderer.send('downloadFile', filename);
-    //receive result from file download from main process to renderer
-    ipcRenderer.on('downloadFileResult', (event, result) => {
-        storage.get('path', function (error, data) {
-            if (error) throw error;
-            //remove all the row first 
-            var element = document.getElementById(path);
-            element.parentNode.removeChild(element);
-            //then add the new updated row that can now be clicked to open the file 
-            var table = document.getElementById('display-files');
-            table.innerHTML += fileTemplate(result);
-            alert();
-        })
-    })
 }
+
+ipcRenderer.on('downloadFileResult:error', (event, result) => {
+    console.log('hey this is an error')
+})
+
+ipcRenderer.on('downloadFileResult', (event, result) => {
+    refreshScreen();
+    alert();
+})
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function synchronizeFile(path, filename) {
     ipcRenderer.send('synchronizeFile', path, filename);

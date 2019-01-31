@@ -37,7 +37,7 @@ function boot() {
 		}
 	})
 	win.loadURL(`file://${__dirname}/index.html`)
-	// win.webContents.openDevTools();
+	win.webContents.openDevTools();
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var menu = Menu.buildFromTemplate([
@@ -275,8 +275,8 @@ ipcMain.on('synchronizeFile', async (event, path, filename) => {
 					if (!error && response.statusCode == 200) {
 						obj.theID = path;
 						//on successfull response we update our version of local file and show success message on screen
-						storage.set(obj.filename, { filename: obj.filename, version: obj.version }, function (error) {
-							if (error) throw new Error('downloadFile():Error updating storage');;
+						storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
+							if (error) throw new Error('downloadFile():Error updating storage' + error);
 						});
 						win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
 					}
@@ -295,27 +295,43 @@ ipcMain.on('downloadFile', async (event, filename) => {
 	try {
 		let propertiesObject = { "filename": filename };
 		storage.get('path', function (error, data) {
-			if (error) throw new Error('Error getting storage');
-			data.path += (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') + filename;
-			request(`${configuration.downloadFileURL}`,
-				{
-					qs: propertiesObject
-				}, function (error, response, body) {
-					let obj = JSON.parse(body);
-					if (error || response.statusCode != 200) {
-						showMessageBox('error', 'Error', 'downloadFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? obj.error : error));
-					} else {
-						response.pipe(fs.createWriteStream(data.path));
-						//if file successfully arrived update the local version
-						storage.set(filename, { filename: filename, version: 1 }, function (error) {
-							if (error) throw new Error('downloadFile():Error updating storage');
-						});
-						let file = new File(filename, `${data.path}`, 1, false, 0, '', '', 1);
-						win.webContents.send('downloadFileResult', file);
-					}
-				});
+			try {
+				if (error) throw new Error('Error getting storage');
+				data.path += (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') + filename;
+				request(`${configuration.downloadFileURL}`,
+					{
+						qs: propertiesObject
+					}, function (error, response, body) {
+						try {
+							if (error || response.statusCode != 200) {
+								win.webContents.send('downloadFileResult:error', 'error');
+								showMessageBox('error', 'Error', 'downloadFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+							} else {
+								fs.createWriteStream(data.path).write(body);
+								//if file successfully arrived update the local version
+								//UPDATE VERSION AS WELL!!! HE SHOULD SEND THE VERSION WITH THE FILE 
+								storage.set(filename, { filename: filename, version: 1 }, function (error) {
+									try {
+										if (error) throw new Error('Error updating storage');
+										win.webContents.send('downloadFileResult', 'success');
+									} catch (error) {
+										win.webContents.send('downloadFileResult:error', 'error');
+										showMessageBox('error', 'Error', 'downloadFile():' + error);
+									}
+								});
+							}
+						} catch (error) {
+							win.webContents.send('downloadFileResult:error', 'error');
+							showMessageBox('error', 'Error', 'downloadFile():' + error);
+						}
+					});
+			} catch (error) {
+				win.webContents.send('downloadFileResult:error', 'error');
+				showMessageBox('error', 'Error', 'downloadFile():' + error);
+			}
 		})
 	} catch (error) {
+		win.webContents.send('downloadFileResult:error', 'error');
 		showMessageBox('error', 'Error', 'downloadFile():downloadServerFile():' + error);
 	};
 })
