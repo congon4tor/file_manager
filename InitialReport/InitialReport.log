@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6930 64-bit) (preloaded format=pdflatex 2019.1.24)  26 JAN 2019 20:48
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6930 64-bit) (preloaded format=pdflatex 2019.1.24)  31 JAN 2019 11:53
 entering extended mode
 **./InitialReport.tex
 (InitialReport.tex
@@ -374,42 +374,37 @@ Overfull \hbox (62.79184pt too wide) in paragraph at lines 36--58
 [][] 
  []
 
-<ProjectDiagram.png, id=9, 577.55775pt x 252.34274pt>
+<ProjectDiagram.png, id=9, 551.661pt x 246.9225pt>
 File: ProjectDiagram.png Graphic file (type png)
 <use ProjectDiagram.png>
 Package pdftex.def Info: ProjectDiagram.png  used on input line 66.
-(pdftex.def)             Requested size: 404.28766pt x 176.6387pt.
+(pdftex.def)             Requested size: 386.16006pt x 172.84456pt.
 
-Overfull \hbox (44.28766pt too wide) in paragraph at lines 66--67
+Overfull \hbox (26.16006pt too wide) in paragraph at lines 66--67
  [][] 
  []
 
 [2]
-
-LaTeX Warning: No positions in optional float specifier.
-               Default added (so using `tbp') on input line 71.
-
-
 Overfull \hbox (5.89735pt too wide) in paragraph at lines 72--82
 [][] 
  []
 
 [3 <./ProjectDiagram.png>] [4] (InitialReport.aux) ) 
 Here is how much of TeX's memory you used:
- 12109 strings out of 492946
- 222193 string characters out of 3135524
+ 12108 strings out of 492946
+ 222177 string characters out of 3135524
  269230 words of memory out of 3000000
- 15963 multiletter control sequences out of 15000+200000
+ 15962 multiletter control sequences out of 15000+200000
  537509 words of font info for 41 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,10n,63p,1099b,321s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 41i,10n,63p,1193b,321s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.
 9/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Program Files/MiKTeX 2.9/fonts/
 type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/pu
 blic/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsf
 onts/cm/cmr12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/c
 mr17.pfb>
-Output written on InitialReport.pdf (4 pages, 121087 bytes).
+Output written on InitialReport.pdf (4 pages, 121081 bytes).
 PDF statistics:
  38 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
