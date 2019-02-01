@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.9.22)  1 FEB 2019 10:25
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.9.22)  1 FEB 2019 13:33
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -576,36 +576,37 @@ Missing character: There is no ú in font cmr10!
 Missing character: There is no ‚ in font cmr10!
 Missing character: There is no Ä in font cmr10!
 Missing character: There is no ù in font cmr10!
-[1] <graphics/ProjectDiagram.png, id=28, 551.661pt x 246.9225pt>
-File: graphics/ProjectDiagram.png Graphic file (type png)
- <use graphics/ProjectDiagram.png>
-Package pdftex.def Info: graphics/ProjectDiagram.png used on input line 158.
-(pdftex.def)             Requested size: 358.5754pt x 160.49771pt.
+[1] <graphics/ProjectDiagram.pdf, id=28, 320.1561pt x 189.8292pt>
+File: graphics/ProjectDiagram.pdf Graphic file (type pdf)
+ <use graphics/ProjectDiagram.pdf>
+Package pdftex.def Info: graphics/ProjectDiagram.pdf used on input line 158.
+(pdftex.def)             Requested size: 320.1553pt x 189.82872pt.
 
 Underfull \hbox (badness 10000) in paragraph at lines 163--164
 
  []
 
+[2 <./graphics/ProjectDiagram.pdf>]
 Missing character: There is no ‚ in font cmr10!
 Missing character: There is no Ä in font cmr10!
 Missing character: There is no ú in font cmr10!
 Missing character: There is no ‚ in font cmr10!
 Missing character: There is no Ä in font cmr10!
 Missing character: There is no ù in font cmr10!
-[2 <./graphics/ProjectDiagram.png>] [3] (/Users/alaindoebeli/Documents/GitHub Repositories/file_manager/InitialReport/.texpadtmp/InitialReport.aux) ) 
+ [3] (/Users/alaindoebeli/Documents/GitHub Repositories/file_manager/InitialReport/.texpadtmp/InitialReport.aux) ) 
 Here is how much of TeX's memory you used:
- 10839 strings out of 492995
- 201639 string characters out of 6132704
+ 10838 strings out of 492995
+ 201635 string characters out of 6132704
  248013 words of memory out of 5000000
  14309 multiletter control sequences out of 15000+600000
  9151 words of font info for 32 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  41i,10n,37p,10410b,275s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb>
-Output written on "/Users/alaindoebeli/Documents/GitHub Repositories/file_manager/InitialReport/.texpadtmp/InitialReport.pdf" (4 pages, 191313 bytes).
+Output written on "/Users/alaindoebeli/Documents/GitHub Repositories/file_manager/InitialReport/.texpadtmp/InitialReport.pdf" (4 pages, 204706 bytes).
 PDF statistics:
- 57 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
+ 70 PDF objects out of 1000 (max. 8388607)
+ 47 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  17 words of extra memory for PDF output out of 10000 (max. 10000000)
 
