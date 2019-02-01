@@ -1,16 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="app">
 
 <head>
     <meta charset="UTF-8">
-    <title>File Synchroniser</title>
-    </title>
-    <link rel="stylesheet" href="style.css" />
+
+    <title>Files synchroniser </title>
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+        crossorigin="anonymous">
+
+    <link rel="stylesheet" href="style.css">
+    <script>let $ = require('jquery');</script>
+    <script src="./renderer/renderer.js"></script>
 </head>
 
 <body>
-    <div id="content">
-        <div id="text">File Synchroniser</div>
+    <div class="fullscreen">
+        <div class="alert-bottom alert alert-success">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            <strong>Success!         </strong>
+        </div>
+        <div id="listed-files" class="table-responsive">
+            <table id="display-files-table" style="width:100%" class="table table-striped">
+                <thead id="display-files-header">
+                </thead>
+                <tbody id="display-files">
+                </tbody>
+            </table>
+        </div>
+        <div id="syncButton">
+            <button class="btn btn-info synchronize" onclick="refreshScreen()"><i class="fas fa-sync"></i></button>
+        </div>
     </div>
 </body>
 

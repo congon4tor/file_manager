@@ -1,0 +1,109 @@
+* { 
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+body{
+    margin:30px;
+}
+
+ul {
+    list-style-type: none;
+    }
+
+header {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    background: #353535;
+    align-self:  stretch;
+    -webkit-app-region: drag;
+}
+
+.option{
+    color:white;
+    padding: 10px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+}
+
+.option:hover{
+    background: red;
+}
+
+div#filePicker{
+    align-self: stretch;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size:3 rem ;
+}
+
+div#mainContent{
+    flex-grow:1 ;
+    display: flex;
+    flex-direction: row;
+}
+
+div#content{
+    /* min-height: 100vh; */
+    display: flex;
+    flex-direction: column;
+}
+
+div#imageControls, div#preview{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    flex-direction: column;
+}
+
+div#imageEditor{
+    display: flex;
+    flex-direction:  row;
+}
+
+.row {
+    /*text-align: center;*/
+    align-content: center;
+    /* align-items: center; */
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #353535;
+    border-color: #353535;
+}
+
+label {
+    margin-bottom: 0rem; 
+}
+
+.synchronize {
+    background-color : blue;
+    padding: 15px 20px;
+    line-height: 1.33;
+    border-radius: 100%;
+  }
+  
+  #syncButton {
+    position: fixed;
+    bottom: 14px;
+    right: 10px;
+  }
+
+.alert-bottom{
+    position: fixed;
+    bottom: 5px;
+    left:2%;
+}
+
+.alert{
+    display: none;
+}
