@@ -16,16 +16,18 @@ ipcRenderer.on('files', (event, files) => {
             <th></th>
         </tr>`;
     document.getElementById('display-files').innerHTML = `${JSON.parse(files).map(fileTemplate).join("")}`;
+    hideLoader()
 })
-//if error console log it
-ipcRenderer.on('files:error', (event, data) => {
-    console.log('ERROR');
+//if error hide loader 
+ipcRenderer.on('files:Error', (event, data) => {
+    hideLoader()
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function openFile(path) {
+    showLoader()
     ipcRenderer.send('openFile', path);
     ipcRenderer.on('openFile', (event, success) => {
-        console.log('ok');
+        hideLoader()
     })
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -56,31 +58,37 @@ function fileTemplate(data) {
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 function downloadFile(filename) {
+    showLoader()
     ipcRenderer.send('downloadFile', filename);
 }
-
-ipcRenderer.on('downloadFileResult:error', (event, result) => {
-    console.log('hey this is an error')
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+ipcRenderer.on('downloadFileResult:Error', (event, result) => {
+    hideLoader()
 })
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 ipcRenderer.on('downloadFileResult', (event, result) => {
-    refreshScreen();
-    alert();
+    hideLoader()
+    refreshScreen()
+    alert()
 })
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function synchronizeFile(path, filename) {
+    showLoader()
     ipcRenderer.send('synchronizeFile', path, filename);
     //receive result from file synchronization from main process to renderer
     ipcRenderer.on('synchronizeFileResult', (event, result) => {
         var myObj = JSON.parse(result);
         document.getElementById(`${myObj.theID}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
         document.getElementById(`${myObj.theID}lastSync`).innerHTML = `${myObj.file.date}`;
-        alert();
+        hideLoader()
+    })
+    ipcRenderer.on('synchronizeFileResult:Error', (event, result) => {
+        hideLoader()
     })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function refreshScreen() {
+    showLoader()
     ipcRenderer.send('refreshScreen', 'refresh');
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,4 +99,11 @@ function alert() {
     }, 6000);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+function showLoader() {
+    document.getElementById("loader").style.display = "block";
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function hideLoader() {
+    document.getElementById("loader").style.display = "none";
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

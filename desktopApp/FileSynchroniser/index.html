@@ -18,12 +18,12 @@
 
 <body>
     <div class="fullscreen">
+        <div id="loader"></div>
         <div class="alert-bottom alert alert-success">
             <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-            <strong>Success!         </strong>
-        </div>
+            <strong style="padding-right: 20px;">Success!</strong> </div>
         <div id="listed-files" class="table-responsive">
-            <table id="display-files-table" style="width:100%" class="table table-striped">
+            <table id="display-files-table" class="table table-striped">
                 <thead id="display-files-header">
                 </thead>
                 <tbody id="display-files">
@@ -31,7 +31,7 @@
             </table>
         </div>
         <div id="syncButton">
-            <button class="btn btn-info synchronize" onclick="refreshScreen()"><i class="fas fa-sync"></i></button>
+            <button class="btn btn-primary synchronize" onclick="refreshScreen()"><i class="fas fa-sync"></i></button>
         </div>
     </div>
 </body>
