@@ -16,12 +16,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import android.widget.*;
 import java.io.File;
+import java.util.HashMap;
+import okhttp3.*;
 import android.os.Environment;
 import android.util.Log;
 import android.Manifest;
 import com.android.volley.toolbox.*;
 import com.android.volley.*;
 import org.json.*;
+import java.util.Map;
+import android.os.StrictMode;
+import android.net.Uri;
+import java.io.*;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -36,6 +42,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         String[] permissions={Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.INTERNET};
 
@@ -95,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         serverNames=new ArrayList<>();
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                (com.android.volley.Request.Method.GET, url, null, new com.android.volley.Response.Listener<JSONObject>() {
 
                     @Override
                     public void onResponse(JSONObject response) {
@@ -120,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                     }
-                }, new Response.ErrorListener() {
+                }, new com.android.volley.Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
@@ -206,26 +215,114 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
             convertView=getLayoutInflater().inflate(R.layout.file_list_layout,null);
-            TextView fileView= (TextView) convertView.findViewById(R.id.file);
-            ImageView updated=(ImageView) convertView.findViewById(R.id.updated);
-            ImageView online=(ImageView) convertView.findViewById(R.id.online);
-            ImageView local=(ImageView) convertView.findViewById(R.id.local);
-            ImageButton synButton=(ImageButton) convertView.findViewById(R.id.synButton);
-            ImageButton downloadButton=(ImageButton) convertView.findViewById(R.id.downloadButton);
-            ImageButton uploadButton=(ImageButton) convertView.findViewById(R.id.uploadButton);
+            final TextView fileView= (TextView) convertView.findViewById(R.id.file);
+            final ImageView updated=(ImageView) convertView.findViewById(R.id.updated);
+            final ImageView online=(ImageView) convertView.findViewById(R.id.online);
+            final ImageView local=(ImageView) convertView.findViewById(R.id.local);
+            final ImageButton synButton=(ImageButton) convertView.findViewById(R.id.synButton);
+            final ImageButton downloadButton=(ImageButton) convertView.findViewById(R.id.downloadButton);
+            final ImageButton uploadButton=(ImageButton) convertView.findViewById(R.id.uploadButton);
 
             fileView.setText(statusList.get(position).name);
 
             if (statusList.get(position).status==1) {
                 local.setVisibility(View.VISIBLE);
                 uploadButton.setVisibility(View.VISIBLE);
+
+                uploadButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(final View v) {
+                        String url = "http://10.0.2.2:3000/file/push";
+                        OkHttpClient okHttpClient = new OkHttpClient();
+                        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
+                        String filename= (String) fileView.getText();
+                        File uploadFile= new File(path,filename);
+                        //getContentResolver().getType(Uri.fromFile(uploadFile))
+
+                        /*FileWriter writer = null;
+                        try {
+                            writer = new FileWriter(uploadFile);
+                            writer.append("thrird test");
+                            writer.flush();
+                            writer.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+*/
+
+
+                        RequestBody requestBody = new MultipartBody.Builder()
+                                .setType(MultipartBody.FORM)
+                                .addFormDataPart("file",filename,RequestBody.create(MediaType.parse("application/octet-stream"),uploadFile))
+                                .addFormDataPart("version","1")
+                                .build();
+
+                    okhttp3.Request request = new okhttp3.Request.Builder()
+                            .url(url)
+                            .post(requestBody)
+                            .build();
+
+                    Call call = okHttpClient.newCall(request);
+                    okhttp3.Response response = null;
+
+                    try{
+                        response = call.execute();
+                        Log.d("upload response",response.body().string());
+                    } catch(IOException e){
+                        e.printStackTrace();
+                    }
+
+                    statusList.get(position).status=3;
+                    local.setVisibility(View.INVISIBLE);
+                    uploadButton.setVisibility(View.INVISIBLE);
+                    updated.setVisibility(View.VISIBLE);
+                    synButton.setVisibility(View.VISIBLE);
+
+                    }
+                });
             }
             else
                 if (statusList.get(position).status==2) {
                     online.setVisibility(View.VISIBLE);
                     downloadButton.setVisibility(View.VISIBLE);
+
+                    downloadButton.setOnClickListener(new View.OnClickListener() {
+                        public void onClick(final View v) {
+
+                            OkHttpClient okHttpClient = new OkHttpClient();
+                            String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
+                            String filename= (String) fileView.getText();
+                            File downloadFile= new File(path,filename);
+                            String url = "http://10.0.2.2:3000/file/getFile?filename=" + filename;
+                            FileWriter writer = null;
+                            okhttp3.Request request = new okhttp3.Request.Builder()
+                                    .url(url)
+                                    .build();
+
+                            okhttp3.Response response = null;
+                            try {
+                                response = okHttpClient.newCall(request).execute();
+                                String contents = response.body().string();
+                                writer = new FileWriter(downloadFile);
+                                writer.append(contents);
+                                writer.flush();
+                                writer.close();
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                            statusList.get(position).status=3;
+                            online.setVisibility(View.INVISIBLE);
+                            downloadButton.setVisibility(View.INVISIBLE);
+                            updated.setVisibility(View.VISIBLE);
+                            synButton.setVisibility(View.VISIBLE);
+
+                        }
+                    });
+
+
                 }
                 else
                     if (statusList.get(position).status==3) {
