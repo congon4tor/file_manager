@@ -301,6 +301,7 @@ ipcMain.on('downloadFile', async (event, filename) => {
 				}, async function (error, response, body) {
 					try {
 						if (error || response.statusCode != 200) {
+							win.webContents.send('downloadFileResult:Error', 'error');
 							showMessageBox('error', 'Error', 'downloadFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
 						} else {
 							fs.createWriteStream(data.path).write(body);
@@ -312,19 +313,19 @@ ipcMain.on('downloadFile', async (event, filename) => {
 									if (error) throw error;
 									win.webContents.send('downloadFileResult', 'success');
 								} catch (error) {
-									showMessageBox('error', 'Error', 'downloadFile():' + error);
 									win.webContents.send('downloadFileResult:Error', 'error');
+									showMessageBox('error', 'Error', 'downloadFile():' + error);
 								}
 							});
 						}
 					} catch (error) {
-						showMessageBox('error', 'Error', 'downloadFile():' + error);
 						win.webContents.send('downloadFileResult:Error', 'error');
+						showMessageBox('error', 'Error', 'downloadFile():' + error);
 					}
 				});
 		} catch (error) {
-			showMessageBox('error', 'Error', 'downloadFile():' + error);
 			win.webContents.send('downloadFileResult:Error', 'error');
+			showMessageBox('error', 'Error', 'downloadFile():' + error);
 		}
 	})
 
