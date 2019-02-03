@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void saveLocalFilesInfo(){
         String message = "";
-        String fileName= "fileInfo.txt";
+        String fileName= "localfileinfo.txt";
 
         for (int i=0;i<statusList.size();i++)
             if (statusList.get(i).status==1)
@@ -190,6 +190,36 @@ public class MainActivity extends AppCompatActivity {
             fileOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+
+    }
+
+
+
+    public String getFileVersion(String filename){
+        OkHttpClient okHttpClient = new OkHttpClient();
+
+        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
+        FileWriter writer = null;
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .build();
+
+        okhttp3.Response response = null;
+        try {
+            response = okHttpClient.newCall(request).execute();
+            String contents = response.body().string();
+            JSONObject json = new JSONObject(contents);
+            return json.getJSONObject("file").get("version").toString();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "error getting the file";
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return "error getting the file version";
         }
 
 
@@ -312,6 +342,26 @@ public class MainActivity extends AppCompatActivity {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
+
+                            String infoFile="fileinfo.txt";
+                            String version=filename + "," + getFileVersion(filename) + "\n";
+                            File file = new File(getFilesDir(), infoFile);
+
+                            try {
+                                if (file.createNewFile()) {
+                                    FileOutputStream fileOutputStream = new FileOutputStream(file, false);
+                                    fileOutputStream.write(version.getBytes());
+                                    fileOutputStream.close();
+                                }
+                                else{
+                                    FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+                                    fileOutputStream.write(version.getBytes());
+                                    fileOutputStream.close();
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
 
                             statusList.get(position).status=3;
                             online.setVisibility(View.INVISIBLE);
