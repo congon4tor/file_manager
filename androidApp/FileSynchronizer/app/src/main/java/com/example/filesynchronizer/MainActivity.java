@@ -1,6 +1,8 @@
 package com.example.filesynchronizer;
 
 import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -13,6 +15,7 @@ import android.widget.ListView;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import android.widget.*;
 import java.io.File;
@@ -28,6 +31,8 @@ import java.util.Map;
 import android.os.StrictMode;
 import android.net.Uri;
 import java.io.*;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -54,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         ) {
             displayFiles();
             //saveLocalFilesInfo();
+
 
         }
 
@@ -197,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public String getFileVersion(String filename){
+    public String getServerFileVersion(String filename){
         OkHttpClient okHttpClient = new OkHttpClient();
 
         String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
@@ -224,6 +230,61 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+    public String getLocalFileVersion(String filename){
+
+        File file = new File(getFilesDir(), "fileinfo.txt");
+        String version="";
+
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            fileInputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return null;
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public String getHash(String filename){
+
+        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
+        File file= new File(path,filename);
+        String contents="";
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            int i=0;
+            while((i=fileInputStream.read())!=-1){
+                contents+=(char)i;
+            }
+            fileInputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        byte[] hashInBytes = md.digest(contents.getBytes(StandardCharsets.UTF_8));
+
+        // bytes to hex
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashInBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+
+
+    }
+
 
 
     //create the custom adapter to display the file names with the syn button
@@ -344,7 +405,7 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             String infoFile="fileinfo.txt";
-                            String version=filename + "," + getFileVersion(filename) + "\n";
+                            String version=filename + "," + getServerFileVersion(filename) + "\n";
                             File file = new File(getFilesDir(), infoFile);
 
                             try {
