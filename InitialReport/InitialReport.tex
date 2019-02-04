@@ -8,8 +8,17 @@
 % Loading Packages %
 %%%%%%%%%%%%%%%%%%%%
 
+\usepackage[hidelinks,pdfpagelabels=false]{hyperref}
 \usepackage[table]{xcolor}
 \usepackage{adjustbox}
+\usepackage[backend=bibtex, sorting=none, style=numeric-comp, defernumbers]{biblatex}
+
+%%%%%%%%%%%%%%
+% Page Setup %
+%%%%%%%%%%%%%%
+
+\addbibresource{bibliography.bib}
+\setlength\bibitemsep{\baselineskip} % Adjust bibliography entries spacing to make more readable
 
 %%%%%%%%%%%%%%%%%%%%%
 % START OF DOCUMENT %
@@ -163,7 +172,16 @@ After the first week meeting, which was dedicated to form a plan and develop our
 We decided to follow an agile approach for our project, as it is a natural fit for software development and it provides working iterations of the final product in every cycle. More specifically, we opted for the “Scrum” methodology but with some necessary adjustments, in order to fit our project and timetable. For example, we opted for 2-week Sprints rather the more traditional 1-month Sprints, due to time constraints and decided not to have a Scrum master. Finally, after the end of each Sprint we will have a Sprint review meeting to decide goals for the next Sprint and reflect on our performance. For the initial Sprint we split in groups of 2 and each group will work on the server, the desktop app and the mobile app respectively. The goal is that every team member has worked on every part of the project by its end.
 	
 \subsection{Peer Assessment \& Conflict Handling}
-Our plan regarding peer assessment is to split the available points evenly amongst all group members. If a team member fails to deliver on time or refuses to communicate with the rest of the team a team meeting will decide if points will be deducted from him, but our approach is to give everyone at first the benefit of doubt. If any conflicts arise, a team meeting will be called and the reasons for the conflict will be discussed. Any decisions will be taken by vote if necessary but early signs suggest that constructive discussion is often enough to resolve any issues.  
+Our plan regarding peer assessment is to split the available points evenly amongst all group members. If a team member fails to deliver on time or refuses to communicate with the rest of the team a team meeting will decide if points will be deducted from him, but our approach is to give everyone at first the benefit of doubt. If any conflicts arise, a team meeting will be called and the reasons for the conflict will be discussed. Any decisions will be taken by vote if necessary but early signs suggest that constructive discussion is often enough to resolve any issues.
+
+%%%%%%%%%%%%%%
+% REFERENCES %
+%%%%%%%%%%%%%%
+
+\printbibheading[title={References},heading=bibintoc]
+\nocite{*}
+\printbibliography[keyword=cite,heading=none]
+\printbibliography[keyword=nocite,heading=none]
 
 %%%%%%%%%%%%%%%%%%%
 % END OF DOCUMENT %
