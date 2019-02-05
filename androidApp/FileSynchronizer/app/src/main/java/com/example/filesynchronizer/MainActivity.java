@@ -61,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
             //saveLocalFilesInfo();
 
 
+
+
+
         }
 
         else {
@@ -235,22 +238,98 @@ public class MainActivity extends AppCompatActivity {
 
         File file = new File(getFilesDir(), "fileinfo.txt");
         String version="";
+        String line="";
 
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
+
+            int i=0;
+            while((fileInputStream.available())!=0) {
+                while ((i = fileInputStream.read()) != '\n') {
+                    line += (char) i;
+                }
+                if (line.substring(0,line.indexOf(',')).equals(filename))
+                    return line.substring(line.indexOf(',')+1);
+
+                line="";
+            }
+
+
             fileInputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "error getting the file version";
+        }
+
+        return "something went wrong";
+
+
+    }
+
+    public void updateLocalFileVersion(String filename){
+
+        File file = new File(getFilesDir(), "fileinfo.txt");
+        String contents="";
+
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            //
+
+            int i=0;
+            while ((i = fileInputStream.read()) != -1)
+                contents += (char) i;
+
+
+            fileInputStream.close();
+
+            String localVersion=getLocalFileVersion(filename);
+            String serverVersion=getServerFileVersion(filename);
+
+
+            FileOutputStream fileOutputStream = new FileOutputStream(file,false);
+            String newContents=contents.replace(filename+","+ localVersion,filename+","+serverVersion);
+
+
+            fileOutputStream.write(newContents.getBytes());
+            fileOutputStream.close();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
 
-        return null;
+    public String getServerFileHash(String filename){
+        OkHttpClient okHttpClient = new OkHttpClient();
+
+        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
+        FileWriter writer = null;
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .build();
+
+        okhttp3.Response response = null;
+        try {
+            response = okHttpClient.newCall(request).execute();
+            String contents = response.body().string();
+            JSONObject json = new JSONObject(contents);
+            return json.getJSONObject("file").get("hash").toString();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "error getting the file";
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return "error getting the file version";
+        }
+
 
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public String getHash(String filename){
+    public String getLocalFileHash(String filename){
 
         String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
         File file= new File(path,filename);
@@ -364,6 +443,25 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
 
+                        String infoFile="fileinfo.txt";
+                        String version=filename + ",1\n";
+                        File file = new File(getFilesDir(), infoFile);
+
+                        try {
+                            if (file.createNewFile()) {
+                                FileOutputStream fileOutputStream = new FileOutputStream(file, false);
+                                fileOutputStream.write(version.getBytes());
+                                fileOutputStream.close();
+                            }
+                            else{
+                                FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+                                fileOutputStream.write(version.getBytes());
+                                fileOutputStream.close();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                     statusList.get(position).status=3;
                     local.setVisibility(View.INVISIBLE);
                     uploadButton.setVisibility(View.INVISIBLE);
@@ -437,6 +535,14 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else
                     if (statusList.get(position).status==3) {
+
+                        String filename= (String) fileView.getText();
+
+                       // if (Integer.parseInt(getLocalFileVersion(filename))!=Integer.parseInt(getServerFileVersion(filename))){
+
+                        //}
+
+
                         updated.setVisibility(View.VISIBLE);
                         synButton.setVisibility(View.VISIBLE);
                     }
