@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
         readFiles();
         //readFilesFromServer();
-        String url = "http://10.0.2.2:3000/file/getInfo";
+        String url = "http://18.130.64.155/file/getInfo";
         serverNames=new ArrayList<>();
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
     public String getServerFileVersion(String filename){
         OkHttpClient okHttpClient = new OkHttpClient();
 
-        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
+        String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
         FileWriter writer = null;
         okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(url)
@@ -403,7 +403,7 @@ public class MainActivity extends AppCompatActivity {
 
                 uploadButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(final View v) {
-                        String url = "http://10.0.2.2:3000/file/push";
+                        String url = "http://18.130.64.155/file/push";
                         OkHttpClient okHttpClient = new OkHttpClient();
                         String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
                         String filename= (String) fileView.getText();
@@ -483,7 +483,7 @@ public class MainActivity extends AppCompatActivity {
                             String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
                             String filename= (String) fileView.getText();
                             File downloadFile= new File(path,filename);
-                            String url = "http://10.0.2.2:3000/file/getFile?filename=" + filename;
+                            String url = "http://18.130.64.155/file/getFile?filename=" + filename;
                             FileWriter writer = null;
                             okhttp3.Request request = new okhttp3.Request.Builder()
                                     .url(url)
