@@ -84,7 +84,7 @@ ipcRenderer.on('downloadFileResult', (event, result) => {
     hideLoader()
     refreshScreen()
     $('[data-toggle="tooltip"]').tooltip();
-    alert(result)
+    alert(result, 'downloaded')
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function synchronizeFile(index, filename) {
@@ -96,9 +96,9 @@ function synchronizeFile(index, filename) {
         var myObj = JSON.parse(result);
         document.getElementById(`${myObj.file.filename}`).innerHTML = ``;
         document.getElementById(`${myObj.index}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
-        document.getElementById(`${myObj.index}lastSync`).innerHTML = `${myObj.file.date}`;
+        document.getElementById(`${myObj.index}lastSync`).innerHTML = ``;
         hideLoader()
-        alert(myObj.file.filename)
+        alert(myObj.file.filename,'uploaded')
     })
     ipcRenderer.on('synchronizeFileResult:Error', (event, result) => {
         hideLoader()
@@ -110,9 +110,9 @@ function refreshScreen() {
     ipcRenderer.send('refreshScreen', 'refresh');
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function alert(message) {
+function alert(message,action) {
     if (message != "")
-        document.getElementById("alert-message").innerHTML = "Success! File " + message + " just downloaded!";
+        document.getElementById("alert-message").innerHTML = "Success! File " + message + " just " + action + "!";
     $(".alert-bottom").show();
     setTimeout(function () {
         $(".alert-bottom").hide();
