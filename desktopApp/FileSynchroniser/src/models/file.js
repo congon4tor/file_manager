@@ -1,4 +1,5 @@
 var File = function (filename, theID, isSync, isDir, size, lastModified, creationTime, version) {
+    this.index = 0;
     this.filename = filename;
     this.theID = theID;
     //0 - exists on local but not on server
@@ -13,6 +14,10 @@ var File = function (filename, theID, isSync, isDir, size, lastModified, creatio
     this.version = version;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+File.prototype.getIndex = function () {
+    return this.index;
+};
+
 File.prototype.getFileName = function () {
     return this.filename;
 };
@@ -45,6 +50,10 @@ File.prototype.getVersion = function () {
     return this.version;
 };
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+File.prototype.setIndex = function (index) {
+    this.index = index;
+};
+
 File.prototype.setFileName = function (fileName) {
     this.fileName = fileName;
 }

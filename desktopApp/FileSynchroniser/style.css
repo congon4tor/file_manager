@@ -1,79 +1,15 @@
 * { 
-    margin: 0;
-    padding: 0;
     box-sizing: border-box;
     max-width: 100%;
 }
 
-body{
-    margin:30px;
-}
-
-ul {
-    list-style-type: none;
-    }
-
-header {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-start;
-    background: #353535;
-    align-self:  stretch;
-    -webkit-app-region: drag;
-}
-
-.option{
-    color:white;
-    padding: 10px 10px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    -webkit-app-region: no-drag;
-}
-
-.option:hover{
-    background: red;
-}
-
-div#filePicker{
-    align-self: stretch;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    font-size:3 rem ;
-}
-
-div#mainContent{
-    flex-grow:1 ;
-    display: flex;
-    flex-direction: row;
-}
-
-div#content{
-    /* min-height: 100vh; */
-    display: flex;
-    flex-direction: column;
-}
-
-div#imageControls, div#preview{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-    flex-direction: column;
-}
-
-div#imageEditor{
-    display: flex;
-    flex-direction:  row;
-}
-
 .row {
-    /*text-align: center;*/
     align-content: center;
-    /* align-items: center; */
 }
+
+/**************************/
+/* for the refresh button */
+/**************************/
 
 .btn-primary {
     color: #fff;
@@ -81,12 +17,44 @@ div#imageEditor{
     border-color: #353535;
 }
 
-label {
-    margin-bottom: 0rem; 
+.btn-primary:hover {
+    color: #353535;
+    background-color: #fff;
+    border-color: #353535;
 }
 
+.btn-primary::selection {
+    color: #353535;
+    background-color: #fff;
+    border-color: #353535;
+}
+
+.btn-primary.focus, .btn-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-primary:not(:disabled):not(.disabled).active, 
+.btn-primary:not(:disabled):not(.disabled):active,
+ .show>.btn-primary.dropdown-toggle {
+    color: #fff;
+    background-color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-primary:not(:disabled):not(.disabled).active:focus, 
+.btn-primary:not(:disabled):not(.disabled):active:focus,
+ .show>.btn-primary.dropdown-toggle:focus {
+    box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-primary:active {
+    color: #353535;
+    background-color: #fff;
+    border-color: #353535;
+  }
+
 .synchronize {
-    background-color : blue;
     padding: 15px 20px;
     line-height: 1.33;
     border-radius: 100%;
@@ -98,6 +66,10 @@ label {
     right: 10px;
   }
 
+/**************************/
+/* for the success alert  */
+/**************************/
+
 .alert-bottom{
     position: fixed;
     bottom: 5px;
@@ -107,3 +79,31 @@ label {
 .alert{
     display: none;
 }
+
+/*******************/
+/* for the loading */
+/*******************/
+#loader {
+    display:none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    margin: -75px 0 0 -75px;
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #353535;
+    width: 120px;
+    height: 120px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
