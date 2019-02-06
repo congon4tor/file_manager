@@ -6,6 +6,8 @@ const { shell } = require('electron');
 const crypto = require('crypto');
 const storage = require('electron-json-storage');
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//the files array that is shown on the screen
+let totalFiles = [];
 //browser window
 let win;
 //model of file 
@@ -32,7 +34,7 @@ function boot() {
 		}
 	})
 	win.loadURL(`file://${__dirname}/index.html`)
-	// win.webContents.openDevTools();
+	win.webContents.openDevTools();
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var menu = Menu.buildFromTemplate([
@@ -139,8 +141,9 @@ function checkExistence(path) {
 	return fs.existsSync(path) ? true : false;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ipcMain.on('openFile', async (event, path) => {
+ipcMain.on('openFile', async (event, index) => {
 	try {
+		let path = totalFiles[index].theID;
 		let exists = checkExistence(path);
 		if (exists) {
 			shell.openItem(path)
@@ -169,6 +172,7 @@ async function statFiles(path, localFiles) {
 		for (let localFile of localFiles) {
 			//for every file call the fs.stat
 			let file = await stat(path, localFile);
+			file.setIndex(filesDetails.length);
 			filesDetails.push(file);
 		}
 		return filesDetails;
@@ -227,16 +231,18 @@ async function loadDirectory(path) {
 							localFiles[localFile].setIsSync(3);
 						}
 					}
+					break;
 				}
-				break;
 			}
 			if (!flag) {
 				//HERE WE ADD FILES THAT ARE ON SERVER BUT NOT ON LOCAL FOLDER 
 				fileObj = new File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, 2, false, (serverFilesArray[serverFile].size / 1024).toFixed(1), serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
+				fileObj.setIndex(localFiles.length + filesView.length)
 				filesView.push(fileObj);
 			}
 			flag = false;
 		}
+		totalFiles = [];
 		totalFiles = localFiles.concat(filesView);
 		win.webContents.send('files', JSON.stringify(totalFiles))
 	} catch (error) {
@@ -246,8 +252,9 @@ async function loadDirectory(path) {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //call the backend service to syncronize a file
-ipcMain.on('synchronizeFile', async (event, path, filename) => {
+ipcMain.on('synchronizeFile', async (event, index, filename) => {
 	let formData;
+	let path = totalFiles[index].theID;
 	//FIRST GET VERSION WE HAVE FOR LOCAL FILE IN ORDER TO SEND IT TO API SERVICE 
 	storage.get(filename, function (error, data) {
 		try {
@@ -265,6 +272,9 @@ ipcMain.on('synchronizeFile', async (event, path, filename) => {
 					let obj = JSON.parse(body);
 					if (!error && response.statusCode == 200) {
 						obj.theID = path;
+						obj.index = index;
+						obj.isSync = 1;
+						obj.file.date = (obj.file.date).replace(/T/, ' ').replace(/\..+/, '')
 						//on successfull response we update our version of local file and show success message on screen
 						storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
 							try {

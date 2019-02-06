@@ -16,6 +16,7 @@ ipcRenderer.on('files', (event, files) => {
             <th></th>
         </tr>`;
     document.getElementById('display-files').innerHTML = `${JSON.parse(files).map(fileTemplate).join("")}`;
+    $('[data-toggle="tooltip"]').tooltip();
     hideLoader()
 })
 //if error hide loader 
@@ -23,9 +24,9 @@ ipcRenderer.on('files:Error', (event, data) => {
     hideLoader()
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function openFile(path) {
+function openFile(index) {
     showLoader()
-    ipcRenderer.send('openFile', path);
+    ipcRenderer.send('openFile', index);
     ipcRenderer.on('openFile', (event, success) => {
         hideLoader()
     })
@@ -35,25 +36,32 @@ function fileTemplate(data) {
     let string = ``;
     if (data.isDir)
         string =
-            `<tr id="${data.theID}">
-                <td ondblclick="synchronizeFile(this.parentNode.id)"><i class="fas fa-sync"></td>
-                <td id="${data.theID}status">${data.isSync ? `<i style="color:green" class="fas fa-check"></i>` : `<i style="color:red" class="fas fa-times"></i>`}</td>
+            `<tr id="${data.index}">
+                <td></td>
+                <td id="${data.index}status">${data.isSync ? `<i style="color:green" class="fas fa-check"></i>` : `<i style="color:red" class="fas fa-times"></i>`}</td>
                 <td ondblclick="readFolder(this.id)"><i class="fa fa-folder-open"></i> ${data.filename}</td>
                 <td></td>
                 <td></td>
             </tr>`
     else
         string =
-            `<tr id="${data.theID}">
-                ${data.isSync == 2 ? `<td id="${data.filename}" ondblclick="downloadFile(this.id)"><i class="fas fa-download"></i></td>` :
-                data.isSync == 1 ? `<td></td>` : data.isSync == 3 ? `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-screwdriver"></i></td>` : `<td id="${data.filename}" ondblclick="synchronizeFile(this.parentNode.id, this.id)"><i class="fas fa-upload"></i></td>`}               
-                <td id="${data.theID}status">${data.isSync == 1 ? ` <i style="color:green" class="fas fa-check"></i>` :
+            `<tr id="${data.index}">
+                <td id="${data.filename}" data-toggle="tooltip" data-placement="top" title="Double click to sync file" ondblclick="${data.isSync == 2 ? `downloadFile(this.id)` : data.isSync == 1 ? `` : `synchronizeFile(this.parentNode.id, this.id)`}">
+            ${data.isSync == 2 ? `<i class="fas fa-download"></i>` :
+                data.isSync == 1 ? `<i class="fas fa-check-circle"></i>` :
+                    data.isSync == 3 ? `<i class="fas fa-screwdriver"></i>` :
+                        `<i class="fas fa-upload"></i>`}
+                </td>
+                <td id="${data.index}status">
+            ${data.isSync == 1 ? `<i style="color:green" class="fas fa-check"></i>` :
                 data.isSync == 2 ? `<i style="color:blue" class="fas fa-cloud"></i>` :
-                    data.isSync == 3 ? `<i style="color:red" class="fas fa-times"></i>` : `<i style="color:grey" class="fas fa-laptop"></i>`}</td>
-                <td ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
+                    data.isSync == 3 ? `<i style="color:red" class="fas fa-times"></i>` :
+                        `<i style="color:grey" class="fas fa-laptop"></i>`}
+                </td>
+                <td data-toggle="tooltip" data-placement="top" title="Double click to open file" ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
                 <td> ${data.size} MB</td>
-                <td id="${data.theID}lastSync"></td>
-                </tr>`;
+                <td id="${data.index}lastSync"></td>
+            </tr>`;
     return string;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -72,14 +80,15 @@ ipcRenderer.on('downloadFileResult', (event, result) => {
     alert()
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function synchronizeFile(path, filename) {
+function synchronizeFile(index, filename) {
     showLoader()
-    ipcRenderer.send('synchronizeFile', path, filename);
+    ipcRenderer.send('synchronizeFile', index, filename);
     //receive result from file synchronization from main process to renderer
     ipcRenderer.on('synchronizeFileResult', (event, result) => {
         var myObj = JSON.parse(result);
-        document.getElementById(`${myObj.theID}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
-        document.getElementById(`${myObj.theID}lastSync`).innerHTML = `${myObj.file.date}`;
+        document.getElementById(`${myObj.file.filename}`).innerHTML = ``;
+        document.getElementById(`${myObj.index}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
+        document.getElementById(`${myObj.index}lastSync`).innerHTML = `${myObj.file.date}`;
         hideLoader()
     })
     ipcRenderer.on('synchronizeFileResult:Error', (event, result) => {
