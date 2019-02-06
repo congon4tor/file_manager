@@ -52,7 +52,7 @@ function fileTemplate(data) {
             `<tr id="${data.index}">
                 <td id="${data.filename}" ondblclick="${data.isSync == 2 ? `downloadFile(this.id)` : data.isSync == 1 ? `` : `synchronizeFile(this.parentNode.id, this.id)`}">
             ${data.isSync == 2 ? `<i data-toggle="tooltip" data-placement="top" title="Double click to download file" class="fas fa-download"></i>` :
-                data.isSync == 1 ? `<i class="fas fa-check-circle"></i>` :
+                data.isSync == 1 ? ` ` :
                     data.isSync == 3 ? `<i data-toggle="tooltip" data-placement="top" title="Double click to fix file" class="fas fa-screwdriver"></i>` :
                         `<i data-toggle="tooltip" data-placement="top" title="Double click to upload the file" class="fas fa-upload"></i>`}
                 </td>
