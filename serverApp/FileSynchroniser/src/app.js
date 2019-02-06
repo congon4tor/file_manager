@@ -27,7 +27,7 @@ db.on('error', (err) => {
 });
 
 //Set up the logger
-app.use(logger('dev'));
+app.use(logger('[:date] - :method :url - :status -- :response-time'));
 
 //Set up bodyparser for receiving JSON in body
 app.use(express.json());
