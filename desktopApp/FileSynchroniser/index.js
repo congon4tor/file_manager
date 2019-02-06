@@ -34,7 +34,7 @@ function boot() {
 		}
 	})
 	win.loadURL(`file://${__dirname}/index.html`)
-	// win.webContents.openDevTools();
+	win.webContents.openDevTools();
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var menu = Menu.buildFromTemplate([
@@ -125,7 +125,7 @@ function stat(path, file) {
 			}
 			else {
 				//if it is not a directory get some more stats and change the icon IS SYNC ON BEGIN IS 0 (FILE EXISTS ON DESKTOP) FOR EVERY FILE
-				fileObj = new File(file, `${path}${file}`, 0, false, (stats.size / 1024).toFixed(1), stats.mtimeMs, stats.birthtimeMs, 1);
+				fileObj = new File(file, `${path}${file}`, 0, false, ((stats.size / 1024) / 1024).toFixed(1), stats.mtimeMs, stats.birthtimeMs, 1);
 				storage.set(file, { filename: file, version: 1 }, function (error) {
 					if (error) reject(error)
 				})
@@ -236,7 +236,7 @@ async function loadDirectory(path) {
 			}
 			if (!flag) {
 				//HERE WE ADD FILES THAT ARE ON SERVER BUT NOT ON LOCAL FOLDER 
-				fileObj = new File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, 2, false, (serverFilesArray[serverFile].size / 1024).toFixed(1), serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
+				fileObj = new File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, 2, false, ((serverFilesArray[serverFile].size / 1024) / 1024).toFixed(1), serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
 				fileObj.setIndex(localFiles.length + filesView.length)
 				filesView.push(fileObj);
 			}
@@ -321,7 +321,7 @@ ipcMain.on('downloadFile', async (event, filename) => {
 							storage.set(filename, { filename: filename, version: serverFileObj.version }, function (error) {
 								try {
 									if (error) throw error;
-									win.webContents.send('downloadFileResult', 'success');
+									win.webContents.send('downloadFileResult', filename);
 								} catch (error) {
 									win.webContents.send('downloadFileResult:Error', 'error');
 									showMessageBox('error', 'Error', 'downloadFile():' + error);

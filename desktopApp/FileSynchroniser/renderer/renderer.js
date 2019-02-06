@@ -7,12 +7,14 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //get the files from main process when user clicks load directory
 ipcRenderer.on('files', (event, files) => {
+    $(".tooltip").tooltip("hide");
     document.getElementById('display-files-header').innerHTML =
         `<tr>
             <th></th>
             <th></th>
             <th>Filename</th>
             <th>Size</th>
+            <th></th>
             <th></th>
         </tr>`;
     document.getElementById('display-files').innerHTML = `${JSON.parse(files).map(fileTemplate).join("")}`;
@@ -25,6 +27,7 @@ ipcRenderer.on('files:Error', (event, data) => {
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function openFile(index) {
+    $(".tooltip").tooltip("hide");
     showLoader()
     ipcRenderer.send('openFile', index);
     ipcRenderer.on('openFile', (event, success) => {
@@ -42,15 +45,16 @@ function fileTemplate(data) {
                 <td ondblclick="readFolder(this.id)"><i class="fa fa-folder-open"></i> ${data.filename}</td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>`
     else
         string =
             `<tr id="${data.index}">
-                <td id="${data.filename}" data-toggle="tooltip" data-placement="top" title="Double click to sync file" ondblclick="${data.isSync == 2 ? `downloadFile(this.id)` : data.isSync == 1 ? `` : `synchronizeFile(this.parentNode.id, this.id)`}">
-            ${data.isSync == 2 ? `<i class="fas fa-download"></i>` :
+                <td id="${data.filename}" ondblclick="${data.isSync == 2 ? `downloadFile(this.id)` : data.isSync == 1 ? `` : `synchronizeFile(this.parentNode.id, this.id)`}">
+            ${data.isSync == 2 ? `<i data-toggle="tooltip" data-placement="top" title="Double click to download file" class="fas fa-download"></i>` :
                 data.isSync == 1 ? `<i class="fas fa-check-circle"></i>` :
-                    data.isSync == 3 ? `<i class="fas fa-screwdriver"></i>` :
-                        `<i class="fas fa-upload"></i>`}
+                    data.isSync == 3 ? `<i data-toggle="tooltip" data-placement="top" title="Double click to fix file" class="fas fa-screwdriver"></i>` :
+                        `<i data-toggle="tooltip" data-placement="top" title="Double click to upload the file" class="fas fa-upload"></i>`}
                 </td>
                 <td id="${data.index}status">
             ${data.isSync == 1 ? `<i style="color:green" class="fas fa-check"></i>` :
@@ -61,11 +65,13 @@ function fileTemplate(data) {
                 <td data-toggle="tooltip" data-placement="top" title="Double click to open file" ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
                 <td> ${data.size} MB</td>
                 <td id="${data.index}lastSync"></td>
+                <td></td>
             </tr>`;
     return string;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 function downloadFile(filename) {
+    $(".tooltip").tooltip("hide");
     showLoader()
     ipcRenderer.send('downloadFile', filename);
 }
@@ -77,10 +83,12 @@ ipcRenderer.on('downloadFileResult:Error', (event, result) => {
 ipcRenderer.on('downloadFileResult', (event, result) => {
     hideLoader()
     refreshScreen()
-    alert()
+    $('[data-toggle="tooltip"]').tooltip();
+    alert(result)
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function synchronizeFile(index, filename) {
+    $(".tooltip").tooltip("hide");
     showLoader()
     ipcRenderer.send('synchronizeFile', index, filename);
     //receive result from file synchronization from main process to renderer
@@ -90,6 +98,7 @@ function synchronizeFile(index, filename) {
         document.getElementById(`${myObj.index}status`).innerHTML = `<i style="color:green" class="fas fa-check"></i>`;
         document.getElementById(`${myObj.index}lastSync`).innerHTML = `${myObj.file.date}`;
         hideLoader()
+        alert(myObj.file.filename)
     })
     ipcRenderer.on('synchronizeFileResult:Error', (event, result) => {
         hideLoader()
@@ -101,7 +110,9 @@ function refreshScreen() {
     ipcRenderer.send('refreshScreen', 'refresh');
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function alert() {
+function alert(message) {
+    if (message != "")
+        document.getElementById("alert-message").innerHTML = "Success! File " + message + " just downloaded!";
     $(".alert-bottom").show();
     setTimeout(function () {
         $(".alert-bottom").hide();
