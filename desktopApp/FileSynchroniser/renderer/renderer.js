@@ -23,6 +23,7 @@ ipcRenderer.on('files', (event, files) => {
 })
 //if error hide loader 
 ipcRenderer.on('files:Error', (event, data) => {
+    $(".tooltip").tooltip("hide");
     hideLoader()
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,21 +66,35 @@ function fileTemplate(data) {
                 <td data-toggle="tooltip" data-placement="top" title="Double click to open file" ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
                 <td> ${data.size} MB</td>
                 <td id="${data.index}lastSync"></td>
-                <td></td>
+                <td ondblclick="deleteFile(this.parentNode.id)"><i data-toggle="tooltip" data-placement="top" title="Double click to delete file" style="color:red" class="fas fa-trash-alt"></i></td>
             </tr>`;
     return string;
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+function deleteFile(filename) {
+    $(".tooltip").tooltip("hide");
+    showLoader()
+    ipcRenderer.send('deleteFile', filename);
+}
+ipcRenderer.on('deleteFileResult:Error', (event, result) => {
+    hideLoader()
+})
+ipcRenderer.on('deleteFileResult', (event, result) => {
+    hideLoader()
+    refreshScreen()
+    $('[data-toggle="tooltip"]').tooltip();
+    if (result != '')
+        alert(result, 'deleted')
+})
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 function downloadFile(filename) {
     $(".tooltip").tooltip("hide");
     showLoader()
     ipcRenderer.send('downloadFile', filename);
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 ipcRenderer.on('downloadFileResult:Error', (event, result) => {
     hideLoader()
 })
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 ipcRenderer.on('downloadFileResult', (event, result) => {
     hideLoader()
     refreshScreen()
