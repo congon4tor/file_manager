@@ -4,6 +4,8 @@ let fileUpload = require('express-fileupload');
 let path = require('path');
 let fs = require('fs');
 let crypto = require('crypto');
+let jsdiff = require("diff");
+let isBinaryFile = require("isbinaryfile");
 
 
 let File = require('../models/file');
@@ -195,7 +197,6 @@ router.get('/getFile', (req, res)=> {
             return res.status(500).send({success: false, error: "Error searching files in the database"});
         }
         if(file){ //check if file exists
-            // res.sendFile(file.path,{dotfiles:"allow"},(err)=>{ sends file content
             // Sends file to the client allow dotfiles means hidden files are allowed to be downloaded
             res.download(file.path, file.filename, {dotfiles:"allow"}, (err)=>{
                 if(err){
@@ -209,5 +210,53 @@ router.get('/getFile', (req, res)=> {
     });
 });
 
+//getDiffFile recive conflict file from client respond with diff file between the server version and the uploaded version
+router.post('/getDiffFile', (req, res)=> {
+    //Check if there are files in the request
+    if (req.files) {
+        //Check for the file input with name file (<input type="file" name="file">)
+        if (req.files.file) {
+            let userFile = req.files.file;
+            //Look for the file with the specified filename in the database
+            File.findOne({filename: userFile.name}, (err, file)=>{
+                if (err) {
+                    console.error(err);
+                    return res.status(500).send({success: false, error: "Error searching files in the database"});
+                }
+                if(file){ //check if file exists
+                    //Check the hash to see if the file has changed
+                    let hash = crypto.createHash('sha256');
+                    hash.update(userFile.data);
+                    let userFileHash = hash.digest('hex');
+                    //TODO: check the server's file hash not the one from the DB (DB and FS are out of sync)
+                    if(file.hash === userFileHash){ //Hash is the same file has not changed
+                        return res.status(400).send({success: false, error:'No changes on file'});
+                    }else{
+                        //Check the file version to see if the file was latest version before changes
+                        if(parseInt(req.body.version) === file.version){ //Files versions are the same so there is no conflict
+                            return res.status(400).send({success: false, error:'File version is up to date there is no conflict'});
+                        }else{
+                            //Check if file is a text file
+                            let serverFile =fs.readFileSync(file.path, 'utf8');
+                            let size = fs.lstatSync(file.path).size;
+                            if(!isBinaryFile.isBinaryFileSync(fs.readFileSync(file.path), size)){
+                                let patch = jsdiff.createPatch("file", serverFile, userFile.data.toString('utf8'));
+                                res.send({success: true, diff: patch, version: file.version});
+                            }else{
+                                return res.status(400).send({success: false, error:'Can not generate diff of a binary file'});
+                            }
+                        }
+                    }
+
+                    
+                }else{ //file not found
+                    return res.status(400).send({success: false, error: "Error file not found in the database"});
+                }
+            });
+
+        }
+    }
+    
+});
 
 module.exports = router;

@@ -11,8 +11,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "diff": "^4.0.1",
     "express": "^4.16.4",
     "express-fileupload": "^1.1.1-alpha.1",
+    "isbinaryfile": "^4.0.0",
     "mongoose": "^5.4.6",
     "morgan": "^1.9.1"
   },
