@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<FileStatus> statusList;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
         ) {
             displayFiles();
             //saveLocalFilesInfo();
+
+
 
 
 
@@ -300,10 +303,43 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void updateLocalFileVersion(String filename,String version){
+
+        File file = new File(getFilesDir(), "fileinfo.txt");
+        String contents="";
+
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            //
+
+            int i=0;
+            while ((i = fileInputStream.read()) != -1)
+                contents += (char) i;
+
+
+            fileInputStream.close();
+
+            String localVersion=getLocalFileVersion(filename);
+            String serverVersion=getServerFileVersion(filename);
+
+
+            FileOutputStream fileOutputStream = new FileOutputStream(file,false);
+            String newContents=contents.replace(filename+","+ localVersion,filename+","+version);
+
+
+            fileOutputStream.write(newContents.getBytes());
+            fileOutputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     public String getServerFileHash(String filename){
         OkHttpClient okHttpClient = new OkHttpClient();
 
-        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
+        String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
         FileWriter writer = null;
         okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(url)
@@ -384,11 +420,13 @@ public class MainActivity extends AppCompatActivity {
             return 0;
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
             convertView=getLayoutInflater().inflate(R.layout.file_list_layout,null);
             final TextView fileView= (TextView) convertView.findViewById(R.id.file);
             final ImageView updated=(ImageView) convertView.findViewById(R.id.updated);
+            final ImageView notUpdated=(ImageView) convertView.findViewById(R.id.notUpdated);
             final ImageView online=(ImageView) convertView.findViewById(R.id.online);
             final ImageView local=(ImageView) convertView.findViewById(R.id.local);
             final ImageButton synButton=(ImageButton) convertView.findViewById(R.id.synButton);
@@ -538,13 +576,110 @@ public class MainActivity extends AppCompatActivity {
 
                         String filename= (String) fileView.getText();
 
-                       // if (Integer.parseInt(getLocalFileVersion(filename))!=Integer.parseInt(getServerFileVersion(filename))){
+                        if (Integer.parseInt(getLocalFileVersion(filename))!=Integer.parseInt(getServerFileVersion(filename))){
 
-                        //}
+                            notUpdated.setVisibility(View.VISIBLE);
+                            synButton.setVisibility(View.VISIBLE);
+
+                            synButton.setOnClickListener(new View.OnClickListener() {
+                                public void onClick(final View v) {
+
+                                    OkHttpClient okHttpClient = new OkHttpClient();
+                                    String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
+                                    String filename= (String) fileView.getText();
+                                    File downloadFile= new File(path,filename);
+                                    String url = "http://18.130.64.155/file/getFile?filename=" + filename;
+                                    FileWriter writer = null;
+                                    okhttp3.Request request = new okhttp3.Request.Builder()
+                                            .url(url)
+                                            .build();
+
+                                    okhttp3.Response response = null;
+                                    try {
+                                        response = okHttpClient.newCall(request).execute();
+                                        String contents = response.body().string();
+                                        writer = new FileWriter(downloadFile,false);
+                                        writer.write(contents);
+                                        writer.flush();
+                                        writer.close();
+
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                  updateLocalFileVersion(filename);
 
 
-                        updated.setVisibility(View.VISIBLE);
-                        synButton.setVisibility(View.VISIBLE);
+                                    notUpdated.setVisibility(View.INVISIBLE);
+                                    updated.setVisibility(View.VISIBLE);
+                                    synButton.setVisibility(View.INVISIBLE);
+
+                                }
+                            });
+
+                        }
+
+                        else {
+                            if (getLocalFileHash(filename).equals(getServerFileHash(filename))==false){
+                                notUpdated.setVisibility(View.VISIBLE);
+                                synButton.setVisibility(View.VISIBLE);
+
+                                uploadButton.setOnClickListener(new View.OnClickListener() {
+                                    public void onClick(final View v) {
+                                        String url = "http://18.130.64.155/file/push";
+                                        OkHttpClient okHttpClient = new OkHttpClient();
+                                        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
+                                        String filename= (String) fileView.getText();
+                                        File uploadFile= new File(path,filename);
+                                        //getContentResolver().getType(Uri.fromFile(uploadFile))
+
+
+                                        RequestBody requestBody = new MultipartBody.Builder()
+                                                .setType(MultipartBody.FORM)
+                                                .addFormDataPart("file",filename,RequestBody.create(MediaType.parse("application/octet-stream"),uploadFile))
+                                                .addFormDataPart("version",getLocalFileVersion(filename))
+                                                .build();
+
+                                        okhttp3.Request request = new okhttp3.Request.Builder()
+                                                .url(url)
+                                                .post(requestBody)
+                                                .build();
+
+                                        Call call = okHttpClient.newCall(request);
+                                        okhttp3.Response response = null;
+
+                                        try{
+                                            response = call.execute();
+                                            Log.d("upload response",response.body().string());
+                                        } catch(IOException e){
+                                            e.printStackTrace();
+                                        }
+
+                                        int currentVersion=Integer.parseInt(getLocalFileVersion(filename)) +1;
+
+
+                                       updateLocalFileVersion(filename,Integer.toString(currentVersion));
+
+                                        notUpdated.setVisibility(View.INVISIBLE);
+                                        updated.setVisibility(View.VISIBLE);
+                                        synButton.setVisibility(View.INVISIBLE);
+
+                                    }
+                                });
+
+
+
+                            }
+                            else{
+                                updated.setVisibility(View.VISIBLE);
+                                //synButton.setVisibility(View.VISIBLE);
+                            }
+
+
+                        }
+
+
+
                     }
 
 
