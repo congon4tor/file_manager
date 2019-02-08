@@ -6,6 +6,7 @@ const { shell } = require('electron');
 const crypto = require('crypto');
 const storage = require('electron-json-storage');
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//the watched path variable so not to read the local storage all the time
 let watchedPath;
 //the files array that is shown on the screen
 let totalFiles = [];
@@ -79,6 +80,7 @@ function loadDirectoryMenuOption() {
 		properties: ['openDirectory']
 	}, function (files) {
 		if (files) {
+			//prepare the watched path variable
 			watchedPath = files[0] + (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/');
 			storage.set('path', { path: watchedPath }, function (error) {
 				if (error) showMessageBox('error', 'Error', 'storage' + error)
@@ -167,6 +169,7 @@ ipcMain.on('openFile', async (event, index) => {
 //call api to get server files 
 async function getServerFiles(filename) {
 	let queryString = { "filename": filename };
+	//have two calls with filename you call to get the info for certain file, with no filename you get all info
 	const serverFiles = await get(`${configuration.getServerFilesURL}`, filename === '' ? null : {
 		qs: queryString
 	});
@@ -199,6 +202,7 @@ function readDirectory(path) {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function getLocalFileHash(path) {
+	//create hash of local file to compare it with what returns from server
 	return new Promise((resolve, reject) => {
 		let hash = crypto.createHash('sha256');
 		let stream = fs.createReadStream(path);
@@ -247,6 +251,7 @@ async function loadDirectory(path) {
 			flag = false;
 		}
 		totalFiles = [];
+		//and we show totalfiles on screen 
 		totalFiles = localFiles.concat(filesView);
 		win.webContents.send('files', JSON.stringify(totalFiles))
 	} catch (error) {
@@ -283,6 +288,8 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 						storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
 							try {
 								if (error) throw error;
+								//also update the array of objects to show that it is sync!!
+								totalFiles[index].setIsSync(1);
 								win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
 							} catch (error) {
 								showMessageBox('error', 'Error', 'Storage:' + error);
@@ -353,15 +360,18 @@ ipcMain.on('deleteFile', async (event, index) => {
 
 	dialog.showMessageBox(win, {
 		type: 'warning',
-		buttons: ['Yes', 'No'],
+		buttons: isSync === 0 ? ['Delete the local file', 'Oops! Don\'t do it'] :
+			isSync === 2 ? ['Delete the server file', 'Oops! Don\'t do it'] :
+				['Delete the server file', 'Delete the local file', 'Delete both', 'Oops! Don\'t do it'],
 		title: 'Delete',
 		message:
 			`Are you sure you want to delete ${filename} ${isSync === 0 ? `from your local folder?` :
 				(isSync === 2) ? `from the server?` :
 					`from your local folder and the server?`}`
 	}, resp => {
-		if (resp === 0) {// User selected 'Yes'
-			deleteFile(filename, isSync, version).then(() => {
+		//the first option is always delete // for isSync 1 and 3 we have 1 or more 2 buttons
+		if ((resp === 0) || ((isSync === 1 || isSync === 3) && (resp === 1 || resp === 2))) {// User selected 'Yes'
+			deleteFile(filename, isSync, version, resp).then(() => {
 				//correctly deleted everything
 				win.webContents.send('deleteFileResult', filename);
 			}).catch(error => {//error message is thrown but we have to close the loader
@@ -373,16 +383,26 @@ ipcMain.on('deleteFile', async (event, index) => {
 	});
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-async function deleteFile(filename, isSync, version) {
-	//isSync === 1 or 3 delete from both 
-	//isSync === 2 delete from server
-	//isSync === 0 delete from local
+async function deleteFile(filename, isSync, version, resp) {
 	try {
-		if (isSync === 1 || isSync === 3 || isSync === 2) {
+		//isSync === 0 delete from local folder. Only response that can be given
+		if (isSync === 0) {
+			await deleteLocalFile(filename)
+		}
+		//isSync === 2 delete from server. Only response that can be given
+		else if (isSync === 2) {
 			await deleteServerFile(filename, version)
 		}
-		if (isSync === 1 || isSync === 3 || isSync === 0) {
-			await deleteLocalFile(filename)
+		//isSync === 1 or 3 depends on response
+		else if (isSync === 1 || isSync === 3) {
+			if (resp === 0) {
+				await deleteServerFile(filename, version)
+			} else if (resp === 1) {
+				await deleteLocalFile(filename)
+			} else if (resp === 2) {
+				await deleteServerFile(filename, version)
+				await deleteLocalFile(filename)
+			}
 		}
 	} catch (error) { //throw the error from any of the two above
 		showMessageBox('error', 'Error', '' + error);
