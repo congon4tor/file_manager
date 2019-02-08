@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<FileStatus> statusList;
 
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -500,11 +500,12 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
 
-                    statusList.get(position).status=3;
-                    local.setVisibility(View.INVISIBLE);
-                    uploadButton.setVisibility(View.INVISIBLE);
-                    updated.setVisibility(View.VISIBLE);
-                    synButton.setVisibility(View.VISIBLE);
+                    //statusList.get(position).status=3;
+                    //local.setVisibility(View.INVISIBLE);
+                    ///uploadButton.setVisibility(View.INVISIBLE);
+                    //updated.setVisibility(View.VISIBLE);
+                    //synButton.setVisibility(View.VISIBLE);
+                        displayFiles();
 
                     }
                 });
@@ -560,11 +561,12 @@ public class MainActivity extends AppCompatActivity {
                             }
 
 
-                            statusList.get(position).status=3;
-                            online.setVisibility(View.INVISIBLE);
-                            downloadButton.setVisibility(View.INVISIBLE);
-                            updated.setVisibility(View.VISIBLE);
-                            synButton.setVisibility(View.VISIBLE);
+                            //statusList.get(position).status=3;
+                           // online.setVisibility(View.INVISIBLE);
+                            //downloadButton.setVisibility(View.INVISIBLE);
+                            //updated.setVisibility(View.VISIBLE);
+                            //synButton.setVisibility(View.VISIBLE);
+                            displayFiles();
 
                         }
                     });
@@ -573,6 +575,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else
                     if (statusList.get(position).status==3) {
+
 
                         String filename= (String) fileView.getText();
 
@@ -610,9 +613,10 @@ public class MainActivity extends AppCompatActivity {
                                   updateLocalFileVersion(filename);
 
 
-                                    notUpdated.setVisibility(View.INVISIBLE);
-                                    updated.setVisibility(View.VISIBLE);
-                                    synButton.setVisibility(View.INVISIBLE);
+                                    //notUpdated.setVisibility(View.INVISIBLE);
+                                   // updated.setVisibility(View.VISIBLE);
+                                   // synButton.setVisibility(View.INVISIBLE);
+                                    displayFiles();
 
                                 }
                             });
@@ -624,7 +628,7 @@ public class MainActivity extends AppCompatActivity {
                                 notUpdated.setVisibility(View.VISIBLE);
                                 synButton.setVisibility(View.VISIBLE);
 
-                                uploadButton.setOnClickListener(new View.OnClickListener() {
+                                synButton.setOnClickListener(new View.OnClickListener() {
                                     public void onClick(final View v) {
                                         String url = "http://18.130.64.155/file/push";
                                         OkHttpClient okHttpClient = new OkHttpClient();
@@ -660,9 +664,10 @@ public class MainActivity extends AppCompatActivity {
 
                                        updateLocalFileVersion(filename,Integer.toString(currentVersion));
 
-                                        notUpdated.setVisibility(View.INVISIBLE);
-                                        updated.setVisibility(View.VISIBLE);
-                                        synButton.setVisibility(View.INVISIBLE);
+                                        //notUpdated.setVisibility(View.INVISIBLE);
+                                        //updated.setVisibility(View.VISIBLE);
+                                        //synButton.setVisibility(View.INVISIBLE);
+                                        displayFiles();
 
                                     }
                                 });
@@ -671,8 +676,9 @@ public class MainActivity extends AppCompatActivity {
 
                             }
                             else{
-                                updated.setVisibility(View.VISIBLE);
+                                //updated.setVisibility(View.VISIBLE);
                                 //synButton.setVisibility(View.VISIBLE);
+                                displayFiles();
                             }
 
 
