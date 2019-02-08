@@ -73,7 +73,7 @@ router.post('/push', (req, res)=> {
                         return res.status(400).send({success: false, error:'No changes on file'});
                     }else{
                         //Check the file version to see if the file was latest version before changes
-                        if(parseInt(req.body.version) === file.version){ //Files versions are the same so there is no conflict
+                        if(parseInt(req.body.version) === file.version || req.body.force === "true"){ //Files versions are the same so there is no conflict or if the force flag is set to true
                             //Before moving the file to the directory check that the directory exists
                             if (!fs.existsSync(global.fileDirectory)) {
                                 //If it does not exist create the directory
@@ -157,7 +157,7 @@ router.post('/push', (req, res)=> {
                 //Check that file exists
                 if(file){
                     //Check if file is last version
-                    if(parseInt(req.body.version) === file.version){ //Files versions are the same so there is no conflict
+                    if(parseInt(req.body.version) === file.version || req.body.force === "true"){ //Files versions are the same so there is no conflict
                         //Delete/unlink the file
                         fs.unlink(file.path, (err) => {
                             if (err) {
@@ -210,8 +210,8 @@ router.get('/getFile', (req, res)=> {
     });
 });
 
-//getDiffFile recive conflict file from client respond with diff file between the server version and the uploaded version
-router.post('/getDiffFile', (req, res)=> {
+//getDiff recive conflict file from client respond with diff between the server version and the uploaded version
+router.post('/getDiff', (req, res)=> {
     //Check if there are files in the request
     if (req.files) {
         //Check for the file input with name file (<input type="file" name="file">)
