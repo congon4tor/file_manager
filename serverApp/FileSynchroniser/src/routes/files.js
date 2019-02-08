@@ -240,7 +240,7 @@ router.post('/getDiff', (req, res)=> {
                             let serverFile =fs.readFileSync(file.path, 'utf8');
                             let size = fs.lstatSync(file.path).size;
                             if(!isBinaryFile.isBinaryFileSync(fs.readFileSync(file.path), size)){
-                                let patch = jsdiff.createPatch("file", serverFile, userFile.data.toString('utf8'));
+                                let patch = jsdiff.createPatch(file.filename, serverFile, userFile.data.toString('utf8'),'','',{context:100000});
                                 res.send({success: true, diff: patch, version: file.version});
                             }else{
                                 return res.status(400).send({success: false, error:'Can not generate diff of a binary file'});
