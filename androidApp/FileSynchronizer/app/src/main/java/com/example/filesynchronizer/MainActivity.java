@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d("error","That didn't work!");
+                        Toast.makeText(getApplicationContext(),"Error connecting to the server please try again", Toast.LENGTH_LONG).show();
 
                     }
                 });
@@ -446,18 +446,6 @@ public class MainActivity extends AppCompatActivity {
                         String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
                         String filename= (String) fileView.getText();
                         File uploadFile= new File(path,filename);
-                        //getContentResolver().getType(Uri.fromFile(uploadFile))
-
-                        /*FileWriter writer = null;
-                        try {
-                            writer = new FileWriter(uploadFile);
-                            writer.append("thrird test");
-                            writer.flush();
-                            writer.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-*/
 
 
                         RequestBody requestBody = new MultipartBody.Builder()
@@ -476,9 +464,17 @@ public class MainActivity extends AppCompatActivity {
 
                     try{
                         response = call.execute();
+                        String contents = response.body().string();
+
+                        if (contents.contains("\"success\":false")) {
+                            Toast.makeText(getApplicationContext(),"Error uploading the file", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
                         Log.d("upload response",response.body().string());
                     } catch(IOException e){
                         e.printStackTrace();
+                        return;
                     }
 
                         String infoFile="fileinfo.txt";
@@ -532,6 +528,12 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 response = okHttpClient.newCall(request).execute();
                                 String contents = response.body().string();
+
+                                if (contents.contains("\"success\":false")) {
+                                    Toast.makeText(getApplicationContext(),"Error downloading the file", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
                                 writer = new FileWriter(downloadFile);
                                 writer.append(contents);
                                 writer.flush();
@@ -539,7 +541,9 @@ public class MainActivity extends AppCompatActivity {
 
                             } catch (IOException e) {
                                 e.printStackTrace();
+                                return;
                             }
+
 
                             String infoFile="fileinfo.txt";
                             String version=filename + "," + getServerFileVersion(filename) + "\n";
@@ -601,6 +605,12 @@ public class MainActivity extends AppCompatActivity {
                                     try {
                                         response = okHttpClient.newCall(request).execute();
                                         String contents = response.body().string();
+
+                                        if (contents.contains("\"success\":false")) {
+                                            Toast.makeText(getApplicationContext(),"Error updating the file", Toast.LENGTH_LONG).show();
+                                            return;
+                                        }
+
                                         writer = new FileWriter(downloadFile,false);
                                         writer.write(contents);
                                         writer.flush();
@@ -608,6 +618,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     } catch (IOException e) {
                                         e.printStackTrace();
+                                        return;
                                     }
 
                                   updateLocalFileVersion(filename);
@@ -654,9 +665,16 @@ public class MainActivity extends AppCompatActivity {
 
                                         try{
                                             response = call.execute();
+                                            String contents = response.body().string();
+
+                                            if (contents.contains("\"success\":false")) {
+                                                Toast.makeText(getApplicationContext(),"Error updating the file", Toast.LENGTH_LONG).show();
+                                                return;
+                                            }
                                             Log.d("upload response",response.body().string());
                                         } catch(IOException e){
                                             e.printStackTrace();
+                                            return;
                                         }
 
                                         int currentVersion=Integer.parseInt(getLocalFileVersion(filename)) +1;
@@ -676,9 +694,9 @@ public class MainActivity extends AppCompatActivity {
 
                             }
                             else{
-                                //updated.setVisibility(View.VISIBLE);
-                                //synButton.setVisibility(View.VISIBLE);
-                                displayFiles();
+                                updated.setVisibility(View.VISIBLE);
+                                synButton.setVisibility(View.INVISIBLE);
+
                             }
 
 

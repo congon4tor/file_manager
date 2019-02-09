@@ -5,5 +5,11 @@
     <string name="last_modified">Last Modified:</string>
     <string name="size">Size:</string>
     <string name="file">TextView</string>
-    <string name="todo">TODO</string>
+    <string name="local">TODO</string>
+    <string name="online">TODO</string>
+    <string name="notUpdated">TODO</string>
+    <string name="updated">TODO</string>
+    <string name="syn">TODO</string>
+    <string name="download">TODO</string>
+    <string name="upload">TODO</string>
 </resources>
