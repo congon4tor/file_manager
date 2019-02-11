@@ -12,6 +12,8 @@ let watchedPath;
 let totalFiles = [];
 //browser window
 let win;
+//conflicts window
+let conflictsWin;
 //model of file 
 let File = require('./src/models/file.js');
 //config file with api call strings
@@ -26,10 +28,12 @@ const post = util.promisify(request.post);
 //create browserwindow
 function boot() {
 	win = new BrowserWindow({
-		width: 1200,
-		height: 700,
+		// width: 1200,
+		// height: 700,
+		useContentSize: true,
 		frame: true,
 		resizable: true,
+		show: false,
 		icon: `${__dirname}/src/img/icon.png`,
 		webPreferences: {
 			//for the warning it gives on console. Security issue (?)
@@ -37,6 +41,12 @@ function boot() {
 		}
 	})
 	win.loadURL(`file://${__dirname}/index.html`)
+	win.once('ready-to-show', () => {
+		win.show()
+	})
+	win.on('closed', () => {
+		win = null
+	})
 	// win.webContents.openDevTools();
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,12 +78,40 @@ var menu = Menu.buildFromTemplate([
 		]
 	},
 ])
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.on('ready', () => {
 	Menu.setApplicationMenu(menu);
 	boot();
 });
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function conflictsBoot() {
+	conflictsWin = new BrowserWindow({
+		parent: win,
+		modal: true,
+		width: 800,
+		height: 400,
+		useContentSize: true,
+		frame: true,
+		resizable: true,
+		show: false,
+		icon: `${__dirname}/src/img/diff.png`,
+		webPreferences: {
+			//for the warning it gives on console. Security issue (?)
+			nodeIntegration: true
+		}
+	})
+	conflictsWin.loadURL(`file://${__dirname}/conflicts.html`)
+	conflictsWin.setMenu(null);
+	conflictsWin.on('closed', () => {
+		conflictsWin = null
+		//send message to first window to close loader 
+		win.webContents.send('closedConflicts', 'true')
+	})
+	conflictsWin.once('ready-to-show', () => {
+		conflictsWin.show()
+	})
+	// conflictsWin.webContents.openDevTools();
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function loadDirectoryMenuOption() {
 	dialog.showOpenDialog({
@@ -91,6 +129,7 @@ function loadDirectoryMenuOption() {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function refreshScreen() {
+	// conflictsBoot();
 	if (watchedPath != null) {
 		loadDirectory(watchedPath);
 	} else {
@@ -263,7 +302,8 @@ async function loadDirectory(path) {
 //call the backend service to syncronize a file
 ipcMain.on('synchronizeFile', async (event, index, filename) => {
 	let formData;
-	let path = totalFiles[index].theID;
+	let path = totalFiles[index].getTheID();
+	let isSync = totalFiles[index].getIsSync();
 	//FIRST GET VERSION WE HAVE FOR LOCAL FILE IN ORDER TO SEND IT TO API SERVICE 
 	storage.get(filename, function (error, data) {
 		try {
@@ -273,29 +313,38 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 				version: data.version,
 				file: fs.createReadStream(path),
 			}
-			request.post(`${configuration.syncFileURL}`,
+			//if isSync===3 check for differences in new file and not synchronize!!
+			request.post((isSync === 3 ? `${configuration.getDiffURL}` : `${configuration.syncFileURL}`),
 				{
 					formData: formData
 				},
 				function (error, response, body) {
 					let obj = JSON.parse(body);
 					if (!error && response.statusCode == 200) {
-						obj.theID = path;
-						obj.index = index;
-						obj.isSync = 1;
-						obj.file.date = (obj.file.date).replace(/T/, ' ').replace(/\..+/, '')
-						//on successfull response we update our version of local file and show success message on screen
-						storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
-							try {
-								if (error) throw error;
-								//also update the array of objects to show that it is sync!!
-								totalFiles[index].setIsSync(1);
-								win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
-							} catch (error) {
-								showMessageBox('error', 'Error', 'Storage:' + error);
-								win.webContents.send('synchronizeFileResult:Error', 'error')
-							}
-						});
+						if (isSync === 3) {
+							//boot the new window and show the difference when it's ready
+							conflictsBoot();
+							conflictsWin.once('ready-to-show', () => {
+								conflictsWin.webContents.send('diffResult', obj.diff)
+							})
+						} else {
+							obj.theID = path;
+							obj.index = index;
+							obj.isSync = 1;
+							obj.file.date = (obj.file.date).replace(/T/, ' ').replace(/\..+/, '')
+							//on successfull response we update our version of local file and show success message on screen
+							storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
+								try {
+									if (error) throw error;
+									//also update the array of objects to show that it is sync!!
+									totalFiles[index].setIsSync(1);
+									win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
+								} catch (error) {
+									showMessageBox('error', 'Error', 'Storage:' + error);
+									win.webContents.send('synchronizeFileResult:Error', 'error')
+								}
+							});
+						}
 					}
 					if (error || response.statusCode != 200) {
 						showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? obj.error : error));

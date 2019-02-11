@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "bootstrap": "^4.2.1",
+    "diff2html": "^2.7.0",
     "electron": "4.0.2",
     "electron-json-storage": "^4.1.6",
     "jquery": "^3.3.1",
