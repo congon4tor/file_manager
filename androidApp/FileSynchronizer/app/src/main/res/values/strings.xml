@@ -12,4 +12,15 @@
     <string name="syn">TODO</string>
     <string name="download">TODO</string>
     <string name="upload">TODO</string>
+    <string name="localDelete">This file will be deleted from local storage. Are you sure you want to proceed?</string>
+    <string name="onlineDelete">This file will be deleted from the server. Are you sure you want to proceed?</string>
+    <string name="bothDelete">Choose where you want this file to be deleted</string>
+    <string name="delete">Yes</string>
+    <string name="notDelete">No</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string-array name="deleteOptions">
+        <item>Locally</item>
+        <item>Server</item>
+    </string-array>
 </resources>

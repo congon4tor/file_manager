@@ -42,6 +42,10 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> serverNames;
     ArrayList<FileStatus> statusList;
 
+    static final int LOCAL=1;
+    static final int ONLINE=2;
+    static final int BOTH=3;
+
 
 
     @Override
@@ -177,13 +181,13 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i=0;i<fileNames.size();i++)
             if (checkExistence(fileNames.get(i),serverNames) == true)
-                statusList.add(new FileStatus(fileNames.get(i),3));
+                statusList.add(new FileStatus(fileNames.get(i),BOTH));
             else
-                statusList.add(new FileStatus(fileNames.get(i),1));
+                statusList.add(new FileStatus(fileNames.get(i),LOCAL));
 
         for (int i=0;i<serverNames.size();i++)
             if (checkExistence(serverNames.get(i),fileNames) == false)
-                statusList.add(new FileStatus(serverNames.get(i),2));
+                statusList.add(new FileStatus(serverNames.get(i),ONLINE));
 
 
     }
@@ -193,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
         String fileName= "localfileinfo.txt";
 
         for (int i=0;i<statusList.size();i++)
-            if (statusList.get(i).status==1)
+            if (statusList.get(i).status==LOCAL)
                 message=message+statusList.get(i).name+","+"1\n";
 
         try {
@@ -336,6 +340,39 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void deleteLocalFileVersion(String filename){
+
+        File file = new File(getFilesDir(), "fileinfo.txt");
+        String contents="";
+
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+
+
+            int i=0;
+            while ((i = fileInputStream.read()) != -1)
+                contents += (char) i;
+
+
+            fileInputStream.close();
+
+            String localVersion=getLocalFileVersion(filename);
+
+
+
+            FileOutputStream fileOutputStream = new FileOutputStream(file,false);
+            String newContents=contents.replace(filename+","+ localVersion+"\n","");
+
+
+            fileOutputStream.write(newContents.getBytes());
+            fileOutputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     public String getServerFileHash(String filename){
         OkHttpClient okHttpClient = new OkHttpClient();
 
@@ -432,10 +469,11 @@ public class MainActivity extends AppCompatActivity {
             final ImageButton synButton=(ImageButton) convertView.findViewById(R.id.synButton);
             final ImageButton downloadButton=(ImageButton) convertView.findViewById(R.id.downloadButton);
             final ImageButton uploadButton=(ImageButton) convertView.findViewById(R.id.uploadButton);
+            final ImageButton deleteButton=(ImageButton) convertView.findViewById(R.id.deleteButton);
 
             fileView.setText(statusList.get(position).name);
 
-            if (statusList.get(position).status==1) {
+            if (statusList.get(position).status==LOCAL) {
                 local.setVisibility(View.VISIBLE);
                 uploadButton.setVisibility(View.VISIBLE);
 
@@ -471,7 +509,7 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
 
-                        Log.d("upload response",response.body().string());
+                       // Log.d("upload response",response.body().string());
                     } catch(IOException e){
                         e.printStackTrace();
                         return;
@@ -505,9 +543,23 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
+
+                deleteButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(final View v) {
+                        String filename= (String) fileView.getText();
+                        DeleteLocalDialog dialog=new DeleteLocalDialog();
+                        Bundle args = new Bundle();
+                        args.putString("filename",filename);
+                        dialog.setArguments(args);
+                        dialog.show(getSupportFragmentManager(),"dialog");
+
+
+                    }
+
+                    });
             }
             else
-                if (statusList.get(position).status==2) {
+                if (statusList.get(position).status==ONLINE) {
                     online.setVisibility(View.VISIBLE);
                     downloadButton.setVisibility(View.VISIBLE);
 
@@ -575,13 +627,41 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
 
+                    deleteButton.setOnClickListener(new View.OnClickListener() {
+                        public void onClick(final View v) {
+                            String filename= (String) fileView.getText();
+                            DeleteOnlineDialog dialog=new DeleteOnlineDialog();
+                            Bundle args = new Bundle();
+                            args.putString("filename",filename);
+                            dialog.setArguments(args);
+                            dialog.show(getSupportFragmentManager(),"dialog");
+
+                        }
+
+                    });
+
+
+
 
                 }
                 else
-                    if (statusList.get(position).status==3) {
+                    if (statusList.get(position).status==BOTH) {
 
 
                         String filename= (String) fileView.getText();
+
+                        deleteButton.setOnClickListener(new View.OnClickListener() {
+                            public void onClick(final View v) {
+                                String filename= (String) fileView.getText();
+                                DeleteBothDialog dialog=new DeleteBothDialog();
+                                Bundle args = new Bundle();
+                                args.putString("filename",filename);
+                                dialog.setArguments(args);
+                                dialog.show(getSupportFragmentManager(),"dialog");
+
+                            }
+
+                        });
 
                         if (Integer.parseInt(getLocalFileVersion(filename))!=Integer.parseInt(getServerFileVersion(filename))){
 
@@ -631,6 +711,8 @@ public class MainActivity extends AppCompatActivity {
 
                                 }
                             });
+
+
 
                         }
 
@@ -692,10 +774,14 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
+
                             }
                             else{
                                 updated.setVisibility(View.VISIBLE);
                                 synButton.setVisibility(View.INVISIBLE);
+
+
 
                             }
 
@@ -711,20 +797,5 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    class FileStatus{
-        public String name;
-        public int status;
 
-        FileStatus(String name, int status){
-            this.name=name;
-            this.status=status;
-
-        }
-
-
-        @Override
-        public String toString() {
-            return name + "  " + status;
-        }
-    }
 }
