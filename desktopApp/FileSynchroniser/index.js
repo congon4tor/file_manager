@@ -270,6 +270,7 @@ async function loadDirectory(path) {
 					/////////////////FILE IS NOT SYNC WITH UPLOADED FILE 
 					if (serverFilesArray[serverFile].version != localFiles[localFile].getVersion()) {
 						localFiles[localFile].setIsSync(3);
+						localFiles[localFile].setVersion(serverFilesArray[serverFile].version);
 					} else {
 						let userFileHash = await getLocalFileHash(localFiles[localFile].getTheID());
 						if (userFileHash === serverFilesArray[serverFile].hash) { //Hash is the same file has not changed
@@ -314,7 +315,7 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 				file: fs.createReadStream(path),
 			}
 			//if isSync===3 check for differences in new file and not synchronize!!
-			request.post((isSync === 3 ? `${configuration.getDiffURL}` : `${configuration.syncFileURL}`),
+			request.post(((isSync === 3 && data.version != totalFiles[index].getVersion()) ? `${configuration.getDiffURL}` : `${configuration.syncFileURL}`),
 				{
 					formData: formData
 				},
