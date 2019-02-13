@@ -3,9 +3,11 @@ let dbConfig = require('../config/database.js');
 let mongoose = require('mongoose');
 let logger = require('morgan');
 let path = require('path');
+let fileUpload = require('express-fileupload');
 
 
 let fileRouter = require('./routes/files');
+let userRouter = require('./routes/users');
 
 //Create the express app
 let app = express();
@@ -29,6 +31,13 @@ db.on('error', (err) => {
 //Set up the logger
 app.use(logger('[:date] - :method :url - :status -- :response-time'));
 
+// fileupload options
+app.use(fileUpload({
+    //sanitize filenames
+    safeFileNames: true,
+    preserveExtension: true
+}));
+
 //Set up bodyparser for receiving JSON in body
 app.use(express.json());
 
@@ -36,6 +45,7 @@ app.use(express.json());
 global.fileDirectory = path.join(__dirname, '/../synchronisedFiles');
 //Use the router for everything related to the files
 app.use('/file', fileRouter);
+app.use('/user', userRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "diff": "^4.0.1",
     "express": "^4.16.4",
     "express-fileupload": "^1.1.1-alpha.1",

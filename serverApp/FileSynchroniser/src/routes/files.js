@@ -1,6 +1,5 @@
 let express = require('express');
 let router = express.Router();
-let fileUpload = require('express-fileupload');
 let path = require('path');
 let fs = require('fs');
 let crypto = require('crypto');
@@ -10,12 +9,6 @@ let isBinaryFile = require("isbinaryfile");
 
 let File = require('../models/file');
 
-// fileupload options
-router.use(fileUpload({
-    //sanitize filenames
-    safeFileNames: true,
-    preserveExtension: true
-}));
 
 //getFileInfo send the client a JSON with updated info about files
 router.get('/getInfo', (req, res)=> {
