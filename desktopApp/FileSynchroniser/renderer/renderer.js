@@ -12,13 +12,15 @@ ipcRenderer.on('files', (event, files) => {
     if (document.getElementById('display-files').innerHTML != '') {
         document.getElementById('display-files-header').innerHTML =
             `<tr>
-            <th></th>
-            <th></th>
-            <th>Filename</th>
-            <th>Size</th>
-            <th></th>
-            <th></th>
-        </tr>`;
+                <th></th>
+                <th></th>
+                <th>Filename</th>
+                <th>Size</th>
+                <th></th>
+                <th></th>
+            </tr>`;
+    } else {
+        document.getElementById('display-files-header').innerHTML = ''
     }
     $('[data-toggle="tooltip"]').tooltip();
     hideLoader()
