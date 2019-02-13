@@ -52,6 +52,8 @@ public class DeleteOnlineDialog extends DialogFragment {
                             return;
                         }
 
+                        ((MainActivity)getActivity()).displayFiles();
+
 
                     }
                 })

@@ -63,34 +63,16 @@ public class MainActivity extends AppCompatActivity {
                 ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[2]) == PackageManager.PERMISSION_GRANTED
         ) {
             displayFiles();
-            //saveLocalFilesInfo();
-
-
-
-
-
-
 
         }
 
         else {
             ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);  //ask permission from user to access phone storage
             displayFiles();
-            //saveLocalFilesInfo();
-
         }
     }
 
 
-    /*public void displayFiles(){
-        fileList = (ListView) findViewById(R.id.fileList); //create the ListView to display the file names
-
-        readFiles();
-        readFilesFromServer();
-        //getLists();
-        //FileAdapter fileAdapter = new FileAdapter();      //create the adapter
-        //fileList.setAdapter(fileAdapter);
-    }*/
     public void readFiles(){
         fileNames = new ArrayList<>();    //list with the file's name
         String path = Environment.getExternalStorageDirectory().toString();    //get the path to the phone storage
@@ -130,16 +112,11 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             for (int i=0;i<response.getJSONArray("files").length();i++)
                                 serverNames.add(response.getJSONArray("files").getJSONObject(i).get("filename").toString());
-                            //Log.d("GETOUTSIDE",serverNames.toString());
 
-                            //////// this is a temporary solution
                             getLists();
                             saveLocalFilesInfo();
                             FileAdapter fileAdapter = new FileAdapter();      //create the adapter
                             fileList.setAdapter(fileAdapter);
-                            /////////////////
-
-
 
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -169,13 +146,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getLists(){
-        //localList=new ArrayList<>();
-       // serverList= new ArrayList<>();
-       // bothList= new ArrayList<>();
-
-        // 1: local file
-        // 2: server file
-        // 3: both file
 
         statusList=new ArrayList<>();
 
@@ -533,12 +503,6 @@ public class MainActivity extends AppCompatActivity {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-
-                    //statusList.get(position).status=3;
-                    //local.setVisibility(View.INVISIBLE);
-                    ///uploadButton.setVisibility(View.INVISIBLE);
-                    //updated.setVisibility(View.VISIBLE);
-                    //synButton.setVisibility(View.VISIBLE);
                         displayFiles();
 
                     }
@@ -616,12 +580,6 @@ public class MainActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             }
 
-
-                            //statusList.get(position).status=3;
-                           // online.setVisibility(View.INVISIBLE);
-                            //downloadButton.setVisibility(View.INVISIBLE);
-                            //updated.setVisibility(View.VISIBLE);
-                            //synButton.setVisibility(View.VISIBLE);
                             displayFiles();
 
                         }
@@ -702,11 +660,6 @@ public class MainActivity extends AppCompatActivity {
                                     }
 
                                   updateLocalFileVersion(filename);
-
-
-                                    //notUpdated.setVisibility(View.INVISIBLE);
-                                   // updated.setVisibility(View.VISIBLE);
-                                   // synButton.setVisibility(View.INVISIBLE);
                                     displayFiles();
 
                                 }
@@ -764,9 +717,6 @@ public class MainActivity extends AppCompatActivity {
 
                                        updateLocalFileVersion(filename,Integer.toString(currentVersion));
 
-                                        //notUpdated.setVisibility(View.INVISIBLE);
-                                        //updated.setVisibility(View.VISIBLE);
-                                        //synButton.setVisibility(View.INVISIBLE);
                                         displayFiles();
 
                                     }
@@ -780,8 +730,6 @@ public class MainActivity extends AppCompatActivity {
                             else{
                                 updated.setVisibility(View.VISIBLE);
                                 synButton.setVisibility(View.INVISIBLE);
-
-
 
                             }
 

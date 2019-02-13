@@ -23,6 +23,8 @@ public class DeleteLocalDialog extends DialogFragment {
                         file.delete();
                         //((MainActivity)getActivity()).deleteLocalFileVersion(filename);
 
+                        ((MainActivity)getActivity()).displayFiles();
+
                     }
                 })
                 .setNegativeButton(R.string.notDelete, new DialogInterface.OnClickListener() {

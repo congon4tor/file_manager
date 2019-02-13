@@ -84,8 +84,10 @@ public class DeleteBothDialog extends DialogFragment {
                                 }
                                 ((MainActivity)getActivity()).deleteLocalFileVersion(filename);
 
+
                             }
                         }
+                        ((MainActivity)getActivity()).displayFiles();
 
                     }
                 })
