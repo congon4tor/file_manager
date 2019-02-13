@@ -394,28 +394,33 @@ function pushFile(path, version, index, force) {
 			formData: formData
 		},
 		function (error, response, body) {
-			if (!error && response.statusCode == 200) {
-				let obj = JSON.parse(body);
-				obj.theID = path;
-				obj.index = index;
-				obj.isSync = File.SAME_VERSION;
-				obj.file.date = (obj.file.date).replace(/T/, ' ').replace(/\..+/, '')
-				//on successfull response we update our version of local file and show success message on screen
-				storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
-					try {
-						if (error) throw error;
-						//also update the array of objects to show that it is sync!!
-						totalFiles[index].setIsSync(File.SAME_VERSION);
-						totalFiles[index].setVersion(obj.file.version);
-						win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
-					} catch (error) {
-						showMessageBox('error', 'Error', 'Storage:' + error);
-						win.webContents.send('synchronizeFileResult:Error', 'error')
-					}
-				});
-			}
-			if (error || response.statusCode != 200) {
-				showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+			try {
+				if (!error && response.statusCode == 200) {
+					let obj = JSON.parse(body);
+					obj.theID = path;
+					obj.index = index;
+					obj.isSync = File.SAME_VERSION;
+					obj.file.date = (obj.file.date).replace(/T/, ' ').replace(/\..+/, '')
+					//on successfull response we update our version of local file and show success message on screen
+					storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
+						try {
+							if (error) throw error;
+							//also update the array of objects to show that it is sync!!
+							totalFiles[index].setIsSync(File.SAME_VERSION);
+							totalFiles[index].setVersion(obj.file.version);
+							win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
+						} catch (error) {
+							showMessageBox('error', 'Error', 'Storage:' + error);
+							win.webContents.send('synchronizeFileResult:Error', 'error')
+						}
+					});
+				}
+				if (error || response.statusCode != 200) {
+					showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+					win.webContents.send('synchronizeFileResult:Error', 'error')
+				}
+			} catch (error) {
+				showMessageBox('error', 'Error', 'synchronizeFile():' + error);
 				win.webContents.send('synchronizeFileResult:Error', 'error')
 			}
 		}
