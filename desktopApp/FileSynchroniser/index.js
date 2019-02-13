@@ -231,7 +231,7 @@ ipcMain.on('openFile', async (event, index) => {
 async function getServerFiles(filename) {
 	let queryString = { "filename": filename };
 	//have two calls with filename you call to get the info for certain file, with no filename you get all info
-	const serverFiles = await get(`${config.getServerFilesURL}`, filename === '' ? null : {
+	const serverFiles = await get(config.getServerFilesURL, filename === '' ? null : {
 		qs: queryString
 	});
 	return serverFiles;
@@ -243,8 +243,6 @@ async function statFiles(path, localFiles) {
 	for (let localFile of localFiles) {
 		//for every file call the fs.stat
 		let file = await stat(path, localFile);
-
-		// console.log('here');
 		file.setIndex(filesDetails.length);
 		filesDetails.push(file);
 	}
@@ -368,19 +366,25 @@ function getDiff(path) {
 			formData: formData
 		},
 		function (error, response, body) {
-			if (!error && response.statusCode == 200) {
-				let obj = JSON.parse(body);
-				//boot the new window and show the difference when it's ready
-				conflictsBoot();
-				conflictsWin.once('ready-to-show', () => {
-					conflictsWin.webContents.send('diffResult', obj.diff)
-				})
-			}
-			if (error || response.statusCode != 200) {
-				showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+			try {
+				if (!error && response.statusCode == 200) {
+					let obj = JSON.parse(body);
+					//boot the new window and show the difference when it's ready
+					conflictsBoot();
+					conflictsWin.once('ready-to-show', () => {
+						conflictsWin.webContents.send('diffResult', obj.diff)
+					})
+				}
+				if (error || response.statusCode != 200) {
+					showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+					win.webContents.send('synchronizeFileResult:Error', 'error')
+				}
+			} catch (error) {
+				showMessageBox('error', 'Error', 'synchronizeFile():' + error);
 				win.webContents.send('synchronizeFileResult:Error', 'error')
 			}
-		})
+		}
+	)
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function pushFile(path, version, index, force) {
@@ -464,12 +468,7 @@ function downloadFile(filename) {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('downloadFile', async (event, filename) => {
-	try {
-		downloadFile(filename)
-	} catch (error) {
-		win.webContents.send('downloadFileResult:Error', 'error');
-		showMessageBox('error', 'Error', '' + error);
-	}
+	downloadFile(filename)
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('deleteFile', async (event, index) => {
@@ -539,7 +538,7 @@ async function deleteServerFile(filename, version) {
 			version: version,
 			delete: 'true'
 		}
-		post(`${config.syncFileURL}`,
+		post(config.syncFileURL,
 			{
 				formData: formData
 			}).then((response) => {

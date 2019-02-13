@@ -55,7 +55,7 @@ function fileTemplate(data) {
                 data.isSync == File.SERVER_ONLY ? `<i style="color:blue" class="fas fa-cloud"></i>` :
                     `<i style="color:grey" class="fas fa-laptop"></i>`}
             </td >
-    <td data-toggle="tooltip" data-placement="right" title="Double click to open file" ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
+    <td data-toggle="tooltip" data-placement="top" title="Double click to open file" ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
     <td> ${data.size} MB</td>
     <td id="${data.index}lastSync"></td>
     <td ondblclick="deleteFile(this.parentNode.id)"><i data-toggle="tooltip" data-placement="top" title="Double click to delete file" style="color:red" class="fas fa-trash-alt"></i></td>
