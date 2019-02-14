@@ -269,7 +269,7 @@ function getLocalFileHash(path) {
 		let hash = crypto.createHash('sha256');
 		let stream = fs.createReadStream(path);
 		stream.on('data', data => hash.update(data));
-		stream.on('end', () => resolve(hash.digest('hex')));
+		stream.on('end', () => { stream.close(); resolve(hash.digest('hex'))} );
 		stream.on('error', error => reject(error));
 	});
 }
@@ -352,11 +352,11 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 			title: 'Oops!',
 			message: 'Somebody else has changed the file before you on the server.'
 		}, resp => {
-			if ( !isBinary && (resp == 0)) {
+			if (!isBinary && (resp == 0)) {
 				getDiff(path, version);
-			} else if ((!isBinary && resp == 1) || (isBinary && resp==0))  {
+			} else if ((!isBinary && resp == 1) || (isBinary && resp == 0)) {
 				pushFile(path, version, index, "true");
-			} else if ((!isBinary && resp == 2) || (isBinary && resp==1)) {
+			} else if ((!isBinary && resp == 2) || (isBinary && resp == 1)) {
 				downloadFile(filename);
 			}
 		})
@@ -366,10 +366,11 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function getDiff(path, version) {
+	let stream = fs.createReadStream(path)
 	let formData = {
 		//API request needs version and file 
 		version: version,
-		file: fs.createReadStream(path),
+		file: stream,
 	}
 	request.post(config.getDiffURL,
 		{
@@ -377,6 +378,7 @@ function getDiff(path, version) {
 		},
 		function (error, response, body) {
 			try {
+				stream.close();
 				if (!error && response.statusCode == 200) {
 					let obj = JSON.parse(body);
 					//boot the new window and show the difference when it's ready
@@ -398,9 +400,10 @@ function getDiff(path, version) {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function pushFile(path, version, index, force) {
+	let stream = fs.createReadStream(path);
 	let formData = {
 		version: version,
-		file: fs.createReadStream(path),
+		file: stream,
 		force: force
 	}
 	request.post(config.syncFileURL,
@@ -409,6 +412,7 @@ function pushFile(path, version, index, force) {
 		},
 		function (error, response, body) {
 			try {
+				stream.close();
 				if (!error && response.statusCode == 200) {
 					let obj = JSON.parse(body);
 					obj.theID = path;
@@ -455,7 +459,9 @@ function downloadFile(filename) {
 					win.webContents.send('downloadFileResult:Error', 'error');
 					showMessageBox('error', 'Error', (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
 				} else {
-					fs.createWriteStream(path).write(body);
+					let stream = fs.createWriteStream(path);
+					stream.write(body);
+					stream.close();
 					//if file successfully arrived update the local version by requesting file info for the file!!
 					let serverFile = await getServerFiles(filename).catch((error) => { throw new Error('Error getting server file.' + error) });
 					let serverFileObj = JSON.parse(serverFile.body).file;
