@@ -4,6 +4,10 @@ let mongoose = require('mongoose');
 let logger = require('morgan');
 let path = require('path');
 let fileUpload = require('express-fileupload');
+var cookieParser = require('cookie-parser');
+let passport = require('passport');
+let session = require('express-session');
+let MongoStore = require('connect-mongo')(session);
 
 
 let fileRouter = require('./routes/files');
@@ -40,6 +44,25 @@ app.use(fileUpload({
 
 //Set up bodyparser for receiving JSON in body
 app.use(express.json());
+
+app.use(cookieParser());
+//Express session
+app.use(session({
+    secret:'default_secret',
+    saveUninitialized:true,
+    resave:true,
+    store: new MongoStore({
+        url: `mongodb://${dbConfig.user}:${dbConfig.password}@${dbConfig.server}/${dbConfig.database}`,
+        collection: 'sessions'
+    }),
+    cookie: {secure: false} //Needed if using HTTP instead of HTTPS
+}));
+
+//Passport config
+require('../config/passport')(passport);
+//Passport Middleware
+app.use(passport.initialize());
+app.use(passport.session());
 
 //Create a global var for the directory where files will be stored
 global.fileDirectory = path.join(__dirname, '/../synchronisedFiles');

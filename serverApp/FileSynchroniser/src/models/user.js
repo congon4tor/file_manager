@@ -8,7 +8,7 @@ var userSchema = mongoose.Schema({
         required: true,
         unique: true
     },
-    //hash of the users password (salted sha256)
+    //hash of the users password (salted)
     password: {
         type: String,
         required: true
