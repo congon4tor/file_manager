@@ -5,6 +5,7 @@ const util = require('util');
 const { shell } = require('electron');
 const crypto = require('crypto');
 const storage = require('electron-json-storage');
+let isBinaryFile = require("isbinaryfile");
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //the watched path variable so not to read the local storage all the time
 let watchedPath;
@@ -329,24 +330,33 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 	let isSync = totalFiles[index].getIsSync();
 	let differentContent = totalFiles[index].getDifferentContent();
 	let version = totalFiles[index].getVersion();
+	let size = totalFiles[index].getSize();
+	let isBinary = false;
+	if (isBinaryFile.isBinaryFileSync(fs.readFileSync(path), fs.lstatSync(path).size)) {
+		isBinary = true;
+	}
 
 	if (isSync == File.DIFFERENT_VERSION && differentContent) {
 		dialog.showMessageBox(win, {
 			type: 'warning',
-			cancelId: 3,
+			cancelId: (isBinary ? 2 : 3),
 			//bug fix: when user clicks the red X should direct to cancel 
-			buttons: ['See file differences',
+			buttons: (isBinary ? [
 				'Upload local file and replace server file',
 				'Download from server and replace local file',
-				'Do nothing'],
+				'Do nothing'] :
+				['See file differences',
+					'Upload local file and replace server file',
+					'Download from server and replace local file',
+					'Do nothing']),
 			title: 'Oops!',
-			message: 'There\'s a problem with the file.'
+			message: 'Somebody else has changed the file before you on the server.'
 		}, resp => {
-			if (resp == 0) {
-				getDiff(path);
-			} else if (resp == 1) {
+			if ( !isBinary && (resp == 0)) {
+				getDiff(path, version);
+			} else if ((!isBinary && resp == 1) || (isBinary && resp==0))  {
 				pushFile(path, version, index, "true");
-			} else if (resp == 2) {
+			} else if ((!isBinary && resp == 2) || (isBinary && resp==1)) {
 				downloadFile(filename);
 			}
 		})
@@ -355,7 +365,7 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 	}
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function getDiff(path) {
+function getDiff(path, version) {
 	let formData = {
 		//API request needs version and file 
 		version: version,

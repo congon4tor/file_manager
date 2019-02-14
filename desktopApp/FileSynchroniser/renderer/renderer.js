@@ -44,18 +44,19 @@ function fileTemplate(data) {
     let string =
         `<tr id="${data.index}">
             <td id="${data.filename}" ondblclick="${data.isSync == File.SERVER_ONLY ? `downloadFile(this.id)` :
-            `synchronizeFile(this.parentNode.id, this.id)`}">
+            (data.isSync == File.DIFFERENT_VERSION || (data.isSync == File.LOCAL_ONLY || (data.isSync == File.SAME_VERSION && data.differentContent))) ? `synchronizeFile(this.parentNode.id, this.id)`
+                : ``}">
                 ${data.isSync == File.SERVER_ONLY ? `<i data-toggle="tooltip" data-placement="right" title="Double click to download file" class="fas fa-download"></i>` :
             data.isSync == File.DIFFERENT_VERSION ? `<i data-toggle="tooltip" data-placement="right" title="Double click to fix file" class="fas fa-screwdriver"></i>` :
                 (data.isSync == File.LOCAL_ONLY || (data.isSync == File.SAME_VERSION && data.differentContent)) ? `<i data-toggle="tooltip" data-placement="right" title="Double click to upload the file" class="fas fa-upload"></i>`
-                    : ``}
+                    : `<i data-toggle="tooltip" data-placement="right" title="No action" class="far fa-check-circle"></i>`}
             </td>
             <td id="${data.index}status">
                 ${ ((data.isSync == File.DIFFERENT_VERSION || data.differentContent) ||
-            (data.isSync == File.SAME_VERSION && data.differentContent)) ? `<i style="color:red" class="fas fa-times"></i>` :
-            (data.isSync == File.SAME_VERSION && !data.differentContent) ? `<i style="color:green" class="fas fa-check"></i>` :
-                data.isSync == File.SERVER_ONLY ? `<i style="color:blue" class="fas fa-cloud"></i>` :
-                    `<i style="color:grey" class="fas fa-laptop"></i>`}
+            (data.isSync == File.SAME_VERSION && data.differentContent)) ? `<i data-toggle="tooltip" data-placement="right" title="File has different content on server" style="color:red" class="fas fa-times"></i>` :
+            (data.isSync == File.SAME_VERSION && !data.differentContent) ? `<i data-toggle="tooltip" data-placement="right" title="File is up to date" style="color:green" class="fas fa-check"></i>` :
+                data.isSync == File.SERVER_ONLY ? `<i data-toggle="tooltip" data-placement="right" title="File is only on the server" style="color:blue" class="fas fa-cloud"></i>` :
+                    `<i data-toggle="tooltip" data-placement="right" title="File is only locally" style="color:grey" class="fas fa-laptop"></i>`}
             </td >
     <td data-toggle="tooltip" data-placement="top" title="Double click to open file" ondblclick="openFile(this.parentNode.id)"><i class="fa fa-file"></i> ${data.filename}</td>
     <td> ${data.size} MB</td>
@@ -107,7 +108,7 @@ function synchronizeFile(index, filename) {
     //receive result from file synchronization from main process to renderer
     ipcRenderer.on('synchronizeFileResult', (event, result) => {
         var myObj = JSON.parse(result);
-        document.getElementById(`${myObj.file.filename}`).innerHTML = ``;
+        document.getElementById(`${myObj.file.filename}`).innerHTML = `<i data-toggle="tooltip" data-placement="right" title="No action" class="far fa-check-circle"></i>`;
         document.getElementById(`${myObj.index}status`).innerHTML = `<i style = "color:green" class="fas fa-check"></i>`;
         document.getElementById(`${myObj.index}lastSync`).innerHTML = ``;
         hideLoader()
