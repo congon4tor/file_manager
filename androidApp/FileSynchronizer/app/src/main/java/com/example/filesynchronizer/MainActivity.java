@@ -7,32 +7,28 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import android.widget.*;
 import java.io.File;
-import java.util.HashMap;
 import okhttp3.*;
 import android.os.Environment;
-import android.util.Log;
 import android.Manifest;
 import com.android.volley.toolbox.*;
 import com.android.volley.*;
 import org.json.*;
-import java.util.Map;
 import android.os.StrictMode;
-import android.net.Uri;
 import java.io.*;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
+import android.support.v4.widget.SwipeRefreshLayout;
+
 
 
 public class MainActivity extends AppCompatActivity {
@@ -42,9 +38,6 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> serverNames;
     ArrayList<FileStatus> statusList;
 
-    static final int LOCAL=1;
-    static final int ONLINE=2;
-    static final int BOTH=3;
 
 
 
@@ -56,50 +49,61 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        String[] permissions={Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.INTERNET};
+        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.INTERNET};
 
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[0]) == PackageManager.PERMISSION_GRANTED &&   //check weather the app has permissions to read/write on the phone storage
-                ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[1]) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this.getApplicationContext(),permissions[2]) == PackageManager.PERMISSION_GRANTED
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), permissions[0]) == PackageManager.PERMISSION_GRANTED &&   //check weather the app has permissions to read/write on the phone storage
+                ContextCompat.checkSelfPermission(this.getApplicationContext(), permissions[1]) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this.getApplicationContext(), permissions[2]) == PackageManager.PERMISSION_GRANTED
         ) {
             displayFiles();
 
-        }
-
-        else {
+        } else {
             ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);  //ask permission from user to access phone storage
             displayFiles();
         }
+
+        final SwipeRefreshLayout mySwipeRefreshLayout =  (SwipeRefreshLayout)findViewById(R.id.swiperefresh);
+
+        mySwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        displayFiles();
+                        //Log.d("check refresh","refresh wroks");
+                        mySwipeRefreshLayout.setRefreshing(false);
+                    }
+                }
+        );
     }
 
 
-    public void readFiles(){
+    public void readFiles() {
         fileNames = new ArrayList<>();    //list with the file's name
         String path = Environment.getExternalStorageDirectory().toString();    //get the path to the phone storage
-        File directory = new File(path+ "/WorkingDirectory");     //set the working directory
+        File directory = new File(path + "/WorkingDirectory");     //set the working directory
         if (!directory.exists())   //if the default directory does not exist create it
             directory.mkdir();
 
         File[] files = directory.listFiles();    //get the folder files
 
-        if (files!=null) {      //check weather the folder is empty
+        if (files != null) {      //check weather the folder is empty
             for (int i = 0; i < files.length; i++) {
                 fileNames.add(files[i].getName());      //put the folder file names on a list
             }
         }
 
-               //set the adapter on the ListView
+        //set the adapter on the ListView
 
     }
 
 
-    public void displayFiles(){
+    public void displayFiles() {
         fileList = (ListView) findViewById(R.id.fileList); //create the ListView to display the file names
 
         readFiles();
         //readFilesFromServer();
         String url = "http://18.130.64.155/file/getInfo";
-        serverNames=new ArrayList<>();
+        serverNames = new ArrayList<>();
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (com.android.volley.Request.Method.GET, url, null, new com.android.volley.Response.Listener<JSONObject>() {
@@ -110,11 +114,10 @@ public class MainActivity extends AppCompatActivity {
 
 
                         try {
-                            for (int i=0;i<response.getJSONArray("files").length();i++)
+                            for (int i = 0; i < response.getJSONArray("files").length(); i++)
                                 serverNames.add(response.getJSONArray("files").getJSONObject(i).get("filename").toString());
 
                             getLists();
-                            saveLocalFilesInfo();
                             FileAdapter fileAdapter = new FileAdapter();      //create the adapter
                             fileList.setAdapter(fileAdapter);
 
@@ -126,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(getApplicationContext(),"Error connecting to the server please try again", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Error connecting to the server please try again", Toast.LENGTH_LONG).show();
 
                     }
                 });
@@ -135,69 +138,52 @@ public class MainActivity extends AppCompatActivity {
         HTTPHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);  // Access the RequestQueue through your singleton class.
     }
 
-    public boolean checkExistence(String fileName, ArrayList<String> fileNameList){
-        for (int i=0;i<fileNameList.size();i++)
+    //check if a file name exists in a list of filenames
+    public boolean checkExistence(String fileName, ArrayList<String> fileNameList) {
+        for (int i = 0; i < fileNameList.size(); i++)
             if (fileName.equals(fileNameList.get(i)))
                 return true;
 
-         return false;
+        return false;
 
 
     }
 
-    public void getLists(){
+    //create a common list that has all the files along with their status, if they are on local storage, server or both
+    public void getLists() {
 
-        statusList=new ArrayList<>();
+        statusList = new ArrayList<>();
 
-        for (int i=0;i<fileNames.size();i++)
-            if (checkExistence(fileNames.get(i),serverNames) == true)
-                statusList.add(new FileStatus(fileNames.get(i),BOTH));
+        for (int i = 0; i < fileNames.size(); i++)
+            if (checkExistence(fileNames.get(i), serverNames) == true)
+                statusList.add(new FileStatus(fileNames.get(i), FileStatus.BOTH));
             else
-                statusList.add(new FileStatus(fileNames.get(i),LOCAL));
+                statusList.add(new FileStatus(fileNames.get(i), FileStatus.LOCAL));
 
-        for (int i=0;i<serverNames.size();i++)
-            if (checkExistence(serverNames.get(i),fileNames) == false)
-                statusList.add(new FileStatus(serverNames.get(i),ONLINE));
-
-
-    }
-
-    public void saveLocalFilesInfo(){
-        String message = "";
-        String fileName= "localfileinfo.txt";
-
-        for (int i=0;i<statusList.size();i++)
-            if (statusList.get(i).status==LOCAL)
-                message=message+statusList.get(i).name+","+"1\n";
-
-        try {
-            FileOutputStream fileOutputStream=openFileOutput(fileName,MODE_PRIVATE);
-            fileOutputStream.write(message.getBytes());
-            fileOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        for (int i = 0; i < serverNames.size(); i++)
+            if (checkExistence(serverNames.get(i), fileNames) == false)
+                statusList.add(new FileStatus(serverNames.get(i), FileStatus.ONLINE));
 
 
     }
 
 
-
-    public String getServerFileVersion(String filename){
+    //get the file version of a specific file from the server
+    public String getServerFileVersion(String filename) {
         OkHttpClient okHttpClient = new OkHttpClient();
 
         String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
         FileWriter writer = null;
-        okhttp3.Request request = new okhttp3.Request.Builder()
+        okhttp3.Request request = new okhttp3.Request.Builder()     //build the request to the server to get information of a file in json format
                 .url(url)
                 .build();
 
         okhttp3.Response response = null;
         try {
-            response = okHttpClient.newCall(request).execute();
-            String contents = response.body().string();
-            JSONObject json = new JSONObject(contents);
-            return json.getJSONObject("file").get("version").toString();
+            response = okHttpClient.newCall(request).execute();        // execute the request
+            String contents = response.body().string();            //get the response contents
+            JSONObject json = new JSONObject(contents);        //get the json form the response
+            return json.getJSONObject("file").get("version").toString();   //get the version field of the file
 
 
         } catch (IOException e) {
@@ -211,24 +197,25 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public String getLocalFileVersion(String filename){
+    //get the file version of a locally saved file
+    public String getLocalFileVersion(String filename) {
 
-        File file = new File(getFilesDir(), "fileinfo.txt");
-        String version="";
-        String line="";
+        File file = new File(getFilesDir(), "fileinfo.txt");   //get the fileinfo file object
+        String version = "";
+        String line = "";
 
         try {
-            FileInputStream fileInputStream = new FileInputStream(file);
+            FileInputStream fileInputStream = new FileInputStream(file);   //open a stream to read the file
 
-            int i=0;
-            while((fileInputStream.available())!=0) {
-                while ((i = fileInputStream.read()) != '\n') {
+            int i = 0;
+            while ((fileInputStream.available()) != 0) {      //read every char of the file until null
+                while ((i = fileInputStream.read()) != '\n') {      //read a whole line and save it
                     line += (char) i;
                 }
-                if (line.substring(0,line.indexOf(',')).equals(filename))
-                    return line.substring(line.indexOf(',')+1);
+                if (line.substring(0, line.indexOf(',')).equals(filename))    //find the line that has the filename you are looking for
+                    return line.substring(line.indexOf(',') + 1);             //get the file version on that line
 
-                line="";
+                line = "";
             }
 
 
@@ -244,28 +231,64 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void updateLocalFileVersion(String filename){
+
+    //update an existing version of a file in the fileinfo file
+    public void updateLocalFileVersion(String filename) {
 
         File file = new File(getFilesDir(), "fileinfo.txt");
-        String contents="";
+        String contents = "";
+
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);    //open a stream to read the fileinfo file
+            //
+
+            int i = 0;
+            while ((i = fileInputStream.read()) != -1)       //save all the fileinfo contents to a variable
+                contents += (char) i;
+
+
+            fileInputStream.close();
+
+            String localVersion = getLocalFileVersion(filename);   //get the file version of the local file
+            String serverVersion = getServerFileVersion(filename); //get the server file version from the server
+
+
+            FileOutputStream fileOutputStream = new FileOutputStream(file, false);     //open a stream to write into the file
+            String newContents = contents.replace(filename + "," + localVersion, filename + "," + serverVersion);    //replace the old local version with the new one from the server
+
+
+            fileOutputStream.write(newContents.getBytes());   //write the new contents into the file
+            fileOutputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    //update an existing version of a file in the fileinfo file but this time you choose the version to update it with
+    public void updateLocalFileVersion(String filename, String version) {
+
+        File file = new File(getFilesDir(), "fileinfo.txt");
+        String contents = "";
 
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
             //
 
-            int i=0;
+            int i = 0;
             while ((i = fileInputStream.read()) != -1)
                 contents += (char) i;
 
 
             fileInputStream.close();
 
-            String localVersion=getLocalFileVersion(filename);
-            String serverVersion=getServerFileVersion(filename);
+            String localVersion = getLocalFileVersion(filename);
+            String serverVersion = getServerFileVersion(filename);
 
 
-            FileOutputStream fileOutputStream = new FileOutputStream(file,false);
-            String newContents=contents.replace(filename+","+ localVersion,filename+","+serverVersion);
+            FileOutputStream fileOutputStream = new FileOutputStream(file, false);
+            String newContents = contents.replace(filename + "," + localVersion, filename + "," + version);
 
 
             fileOutputStream.write(newContents.getBytes());
@@ -277,31 +300,31 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void updateLocalFileVersion(String filename,String version){
+    //delete the local file version in the fileinfo file of a specific filename
+    public void deleteLocalFileVersion(String filename) {
 
         File file = new File(getFilesDir(), "fileinfo.txt");
-        String contents="";
+        String contents = "";
 
         try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-            //
+            FileInputStream fileInputStream = new FileInputStream(file);    //open a stream to read the file
 
-            int i=0;
-            while ((i = fileInputStream.read()) != -1)
+
+            int i = 0;
+            while ((i = fileInputStream.read()) != -1)     //save all the contents of the file
                 contents += (char) i;
 
 
             fileInputStream.close();
 
-            String localVersion=getLocalFileVersion(filename);
-            String serverVersion=getServerFileVersion(filename);
+            String localVersion = getLocalFileVersion(filename);   //get the local file version of the file
 
 
-            FileOutputStream fileOutputStream = new FileOutputStream(file,false);
-            String newContents=contents.replace(filename+","+ localVersion,filename+","+version);
+            FileOutputStream fileOutputStream = new FileOutputStream(file, false);    //open a stream to write into the file
+            String newContents = contents.replace(filename + "," + localVersion + "\n", "");   //delete the line that contains the filename
 
 
-            fileOutputStream.write(newContents.getBytes());
+            fileOutputStream.write(newContents.getBytes());  //write the new contents into the file
             fileOutputStream.close();
 
         } catch (IOException e) {
@@ -310,40 +333,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void deleteLocalFileVersion(String filename){
 
-        File file = new File(getFilesDir(), "fileinfo.txt");
-        String contents="";
-
-        try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-
-
-            int i=0;
-            while ((i = fileInputStream.read()) != -1)
-                contents += (char) i;
-
-
-            fileInputStream.close();
-
-            String localVersion=getLocalFileVersion(filename);
-
-
-
-            FileOutputStream fileOutputStream = new FileOutputStream(file,false);
-            String newContents=contents.replace(filename+","+ localVersion+"\n","");
-
-
-            fileOutputStream.write(newContents.getBytes());
-            fileOutputStream.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public String getServerFileHash(String filename){
+    //get the hash value of a specific file from the server
+    public String getServerFileHash(String filename) {
         OkHttpClient okHttpClient = new OkHttpClient();
 
         String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
@@ -355,9 +347,9 @@ public class MainActivity extends AppCompatActivity {
         okhttp3.Response response = null;
         try {
             response = okHttpClient.newCall(request).execute();
-            String contents = response.body().string();
+            String contents = response.body().string();            //get contents of json response
             JSONObject json = new JSONObject(contents);
-            return json.getJSONObject("file").get("hash").toString();
+            return json.getJSONObject("file").get("hash").toString();       //get the hash of the file
 
 
         } catch (IOException e) {
@@ -371,17 +363,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public String getLocalFileHash(String filename){
 
-        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
-        File file= new File(path,filename);
-        String contents="";
+    //calculates the hash value of a local file
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public String getLocalFileHash(String filename) {
+
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";
+        File file = new File(path, filename);
+        String contents = "";
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
-            int i=0;
-            while((i=fileInputStream.read())!=-1){
-                contents+=(char)i;
+            int i = 0;
+            while ((i = fileInputStream.read()) != -1) {
+                contents += (char) i;
             }
             fileInputStream.close();
 
@@ -407,10 +401,105 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //sends a file to the server
+    public String uploadFile(String filename, String version) {
+
+        String url = "http://18.130.64.155/file/push";
+        OkHttpClient okHttpClient = new OkHttpClient();
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory of the file you want to send to server
+        File uploadFile = new File(path, filename);     //get the object of the file you want to upload in that directory
+
+        //post request to send the file from the server
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("file", filename, RequestBody.create(MediaType.parse("application/octet-stream"), uploadFile))  //send the file contents
+                .addFormDataPart("version", version)        //send the version of the file
+                .build();
+
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .post(requestBody)
+                .build();
+
+        Call call = okHttpClient.newCall(request);
+        okhttp3.Response response = null;
+
+        try {
+            response = call.execute();
+            return response.body().string();      //return the server response
+            // Log.d("upload response",response.body().string());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "error";
+        }
+
+    }
+
+    //download a file from the server
+    public String downloadFile(String filename) {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory where the file will be saved
+        File downloadFile = new File(path, filename);    //get the file object you will save the contents in
+        String url = "http://18.130.64.155/file/getFile?filename=" + filename;
+        FileWriter writer = null;
+
+        //build request to get the file from the server
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .build();
+
+        okhttp3.Response response = null;
+        try {
+            response = okHttpClient.newCall(request).execute();   //get the response
+            String contents = response.body().string();       //save the contents of the file into a string
+
+            //check weather the server returns an error and display the proper error message
+            if (contents.contains("\"success\":false")) {
+                Toast.makeText(getApplicationContext(), "Error getting the file", Toast.LENGTH_LONG).show();
+                return "error";
+            }
+
+            //write the contents you got into the file
+            writer = new FileWriter(downloadFile, false);
+            writer.write(contents);
+            writer.flush();
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "error";
+        }
+
+        return "success";
+
+    }
+
+    //add the version of a new file into the fileinfo.txt file
+    public void addLocalFileInfo(String filename, String version) {
+        String infoFile = "fileinfo.txt";
+        String versionLine = filename + "," + version + "\n";     //the new line of the version of a specific filename
+        File file = new File(getFilesDir(), infoFile);
+
+        try {
+            if (file.createNewFile()) {         //check weather the fileinfo.txt file already exists
+                FileOutputStream fileOutputStream = new FileOutputStream(file, false);       //create the file and add the filename with its version
+                fileOutputStream.write(versionLine.getBytes());
+                fileOutputStream.close();
+            } else {
+                FileOutputStream fileOutputStream = new FileOutputStream(file, true);        //append the existing file with the new filename and version
+                fileOutputStream.write(versionLine.getBytes());
+                fileOutputStream.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
 
 
     //create the custom adapter to display the file names with the syn button
-    class FileAdapter extends BaseAdapter{
+    class FileAdapter extends BaseAdapter {
 
         @Override
         public int getCount() {
@@ -430,79 +519,71 @@ public class MainActivity extends AppCompatActivity {
         @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
-            convertView=getLayoutInflater().inflate(R.layout.file_list_layout,null);
-            final TextView fileView= (TextView) convertView.findViewById(R.id.file);
-            final ImageView updated=(ImageView) convertView.findViewById(R.id.updated);
-            final ImageView notUpdated=(ImageView) convertView.findViewById(R.id.notUpdated);
-            final ImageView online=(ImageView) convertView.findViewById(R.id.online);
-            final ImageView local=(ImageView) convertView.findViewById(R.id.local);
-            final ImageButton synButton=(ImageButton) convertView.findViewById(R.id.synButton);
-            final ImageButton downloadButton=(ImageButton) convertView.findViewById(R.id.downloadButton);
-            final ImageButton uploadButton=(ImageButton) convertView.findViewById(R.id.uploadButton);
-            final ImageButton deleteButton=(ImageButton) convertView.findViewById(R.id.deleteButton);
 
-            fileView.setText(statusList.get(position).name);
+            //get all the items for each line of the list
+            convertView = getLayoutInflater().inflate(R.layout.file_list_layout, null);
+            final TextView fileView = (TextView) convertView.findViewById(R.id.file);
+            final ImageView updated = (ImageView) convertView.findViewById(R.id.updated);
+            final ImageView notUpdated = (ImageView) convertView.findViewById(R.id.notUpdated);
+            final ImageView online = (ImageView) convertView.findViewById(R.id.online);
+            final ImageView local = (ImageView) convertView.findViewById(R.id.local);
+            final ImageButton synButton = (ImageButton) convertView.findViewById(R.id.synButton);
+            final ImageButton downloadButton = (ImageButton) convertView.findViewById(R.id.downloadButton);
+            final ImageButton uploadButton = (ImageButton) convertView.findViewById(R.id.uploadButton);
+            final ImageButton deleteButton = (ImageButton) convertView.findViewById(R.id.deleteButton);
 
-            if (statusList.get(position).status==LOCAL) {
+            fileView.setText(statusList.get(position).name);           //set the name of the file to appear
+
+            if (statusList.get(position).status == FileStatus.LOCAL) {        //check weather the file is only local
                 local.setVisibility(View.VISIBLE);
                 uploadButton.setVisibility(View.VISIBLE);
 
+                //action when upload button is pressed
                 uploadButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(final View v) {
-                        String url = "http://18.130.64.155/file/push";
-                        OkHttpClient okHttpClient = new OkHttpClient();
-                        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
-                        String filename= (String) fileView.getText();
-                        File uploadFile= new File(path,filename);
+                        String filename = (String) fileView.getText();     //get the filename of the file you want to upload
 
-
-                        RequestBody requestBody = new MultipartBody.Builder()
-                                .setType(MultipartBody.FORM)
-                                .addFormDataPart("file",filename,RequestBody.create(MediaType.parse("application/octet-stream"),uploadFile))
-                                .addFormDataPart("version","1")
-                                .build();
-
-                    okhttp3.Request request = new okhttp3.Request.Builder()
-                            .url(url)
-                            .post(requestBody)
-                            .build();
-
-                    Call call = okHttpClient.newCall(request);
-                    okhttp3.Response response = null;
-
-                    try{
-                        response = call.execute();
-                        String contents = response.body().string();
-
-                        if (contents.contains("\"success\":false")) {
-                            Toast.makeText(getApplicationContext(),"Error uploading the file", Toast.LENGTH_LONG).show();
+                        if (uploadFile(filename, "1").contains("\"success\":false")) {        //execute the upload and check weather it returns an error
+                            Toast.makeText(getApplicationContext(), "Error uploading the file", Toast.LENGTH_LONG).show();
                             return;
                         }
 
-                       // Log.d("upload response",response.body().string());
-                    } catch(IOException e){
-                        e.printStackTrace();
-                        return;
+                        addLocalFileInfo(filename, "1");           //save the filename of the file you just uploaded with version 1
+                        displayFiles();
+
+                    }
+                });
+
+                //action when the delete button is pressed
+                deleteButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(final View v) {
+                        String filename = (String) fileView.getText();
+                        DeleteLocalDialog dialog = new DeleteLocalDialog();      //create the user delete dialog
+                        Bundle args = new Bundle();
+                        args.putString("filename", filename);        //send the filename to the dialog
+                        dialog.setArguments(args);
+                        dialog.show(getSupportFragmentManager(), "dialog");      //show the dialog
+
+
                     }
 
-                        String infoFile="fileinfo.txt";
-                        String version=filename + ",1\n";
-                        File file = new File(getFilesDir(), infoFile);
+                });
+            } else if (statusList.get(position).status == FileStatus.ONLINE) {        //check weather the file is only on the server
+                online.setVisibility(View.VISIBLE);
+                downloadButton.setVisibility(View.VISIBLE);
 
-                        try {
-                            if (file.createNewFile()) {
-                                FileOutputStream fileOutputStream = new FileOutputStream(file, false);
-                                fileOutputStream.write(version.getBytes());
-                                fileOutputStream.close();
-                            }
-                            else{
-                                FileOutputStream fileOutputStream = new FileOutputStream(file, true);
-                                fileOutputStream.write(version.getBytes());
-                                fileOutputStream.close();
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                //action when download button is pressed
+                downloadButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(final View v) {
+
+                        String filename = (String) fileView.getText();    //get the filename
+
+                        if (downloadFile(filename).equals("error"))  //download the file
+                            return;
+
+
+                        addLocalFileInfo(filename, getServerFileVersion(filename));    //save the filename along with its version you got from the server
+
                         displayFiles();
 
                     }
@@ -510,235 +591,92 @@ public class MainActivity extends AppCompatActivity {
 
                 deleteButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(final View v) {
-                        String filename= (String) fileView.getText();
-                        DeleteLocalDialog dialog=new DeleteLocalDialog();
+                        String filename = (String) fileView.getText();      //same as above
+                        DeleteOnlineDialog dialog = new DeleteOnlineDialog();
                         Bundle args = new Bundle();
-                        args.putString("filename",filename);
+                        args.putString("filename", filename);
                         dialog.setArguments(args);
-                        dialog.show(getSupportFragmentManager(),"dialog");
-
+                        dialog.show(getSupportFragmentManager(), "dialog");
 
                     }
 
-                    });
-            }
-            else
-                if (statusList.get(position).status==ONLINE) {
-                    online.setVisibility(View.VISIBLE);
-                    downloadButton.setVisibility(View.VISIBLE);
+                });
 
-                    downloadButton.setOnClickListener(new View.OnClickListener() {
+
+            } else if (statusList.get(position).status == FileStatus.BOTH) {     //check weather the file is on both local storage and server
+
+
+                String filename = (String) fileView.getText();    //get the filename
+
+                deleteButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(final View v) {
+                        String filename = (String) fileView.getText();    //same as above
+                        DeleteBothDialog dialog = new DeleteBothDialog();
+                        Bundle args = new Bundle();
+                        args.putString("filename", filename);
+                        dialog.setArguments(args);
+                        dialog.show(getSupportFragmentManager(), "dialog");
+
+                    }
+
+                });
+
+                if (Integer.parseInt(getLocalFileVersion(filename)) != Integer.parseInt(getServerFileVersion(filename))) {  //check if the version of the local file is not the same as the correspoding of the server
+
+                    notUpdated.setVisibility(View.VISIBLE);
+                    synButton.setVisibility(View.VISIBLE);
+
+                    //action to be done when you hit synchronise
+                    synButton.setOnClickListener(new View.OnClickListener() {
                         public void onClick(final View v) {
-
-                            OkHttpClient okHttpClient = new OkHttpClient();
-                            String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
-                            String filename= (String) fileView.getText();
-                            File downloadFile= new File(path,filename);
-                            String url = "http://18.130.64.155/file/getFile?filename=" + filename;
-                            FileWriter writer = null;
-                            okhttp3.Request request = new okhttp3.Request.Builder()
-                                    .url(url)
-                                    .build();
-
-                            okhttp3.Response response = null;
-                            try {
-                                response = okHttpClient.newCall(request).execute();
-                                String contents = response.body().string();
-
-                                if (contents.contains("\"success\":false")) {
-                                    Toast.makeText(getApplicationContext(),"Error downloading the file", Toast.LENGTH_LONG).show();
-                                    return;
-                                }
-
-                                writer = new FileWriter(downloadFile);
-                                writer.append(contents);
-                                writer.flush();
-                                writer.close();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                            String filename = (String) fileView.getText();     //get the filename
+                            if (downloadFile(filename).equals("error"))        //download the new version of the file
                                 return;
-                            }
 
-
-                            String infoFile="fileinfo.txt";
-                            String version=filename + "," + getServerFileVersion(filename) + "\n";
-                            File file = new File(getFilesDir(), infoFile);
-
-                            try {
-                                if (file.createNewFile()) {
-                                    FileOutputStream fileOutputStream = new FileOutputStream(file, false);
-                                    fileOutputStream.write(version.getBytes());
-                                    fileOutputStream.close();
-                                }
-                                else{
-                                    FileOutputStream fileOutputStream = new FileOutputStream(file, true);
-                                    fileOutputStream.write(version.getBytes());
-                                    fileOutputStream.close();
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
+                            updateLocalFileVersion(filename);            //update the local version file with the new version you got from the server
                             displayFiles();
 
                         }
                     });
 
-                    deleteButton.setOnClickListener(new View.OnClickListener() {
-                        public void onClick(final View v) {
-                            String filename= (String) fileView.getText();
-                            DeleteOnlineDialog dialog=new DeleteOnlineDialog();
-                            Bundle args = new Bundle();
-                            args.putString("filename",filename);
-                            dialog.setArguments(args);
-                            dialog.show(getSupportFragmentManager(),"dialog");
 
-                        }
+                } else {
+                    if (getLocalFileHash(filename).equals(getServerFileHash(filename)) == false) {   //if the files have the same version check weather they are not exactly the same
+                        notUpdated.setVisibility(View.VISIBLE);
+                        synButton.setVisibility(View.VISIBLE);
 
-                    });
+                        synButton.setOnClickListener(new View.OnClickListener() {
+                            public void onClick(final View v) {
+                                String filename = (String) fileView.getText();
+
+                                if (uploadFile(filename, getLocalFileVersion(filename)).contains("\"success\":false")) {     //upload the new version of the file
+                                    Toast.makeText(getApplicationContext(), "Error updating the file", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
 
 
+                                int currentVersion = Integer.parseInt(getLocalFileVersion(filename)) + 1;     //calculate the new version of the file
+
+
+                                updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
+
+                                displayFiles();
+
+                            }
+                        });
+
+
+                    } else {        //in the occasion that the files have the same version and same hash
+                        updated.setVisibility(View.VISIBLE);
+                        synButton.setVisibility(View.INVISIBLE);
+
+                    }
 
 
                 }
-                else
-                    if (statusList.get(position).status==BOTH) {
 
 
-                        String filename= (String) fileView.getText();
-
-                        deleteButton.setOnClickListener(new View.OnClickListener() {
-                            public void onClick(final View v) {
-                                String filename= (String) fileView.getText();
-                                DeleteBothDialog dialog=new DeleteBothDialog();
-                                Bundle args = new Bundle();
-                                args.putString("filename",filename);
-                                dialog.setArguments(args);
-                                dialog.show(getSupportFragmentManager(),"dialog");
-
-                            }
-
-                        });
-
-                        if (Integer.parseInt(getLocalFileVersion(filename))!=Integer.parseInt(getServerFileVersion(filename))){
-
-                            notUpdated.setVisibility(View.VISIBLE);
-                            synButton.setVisibility(View.VISIBLE);
-
-                            synButton.setOnClickListener(new View.OnClickListener() {
-                                public void onClick(final View v) {
-
-                                    OkHttpClient okHttpClient = new OkHttpClient();
-                                    String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
-                                    String filename= (String) fileView.getText();
-                                    File downloadFile= new File(path,filename);
-                                    String url = "http://18.130.64.155/file/getFile?filename=" + filename;
-                                    FileWriter writer = null;
-                                    okhttp3.Request request = new okhttp3.Request.Builder()
-                                            .url(url)
-                                            .build();
-
-                                    okhttp3.Response response = null;
-                                    try {
-                                        response = okHttpClient.newCall(request).execute();
-                                        String contents = response.body().string();
-
-                                        if (contents.contains("\"success\":false")) {
-                                            Toast.makeText(getApplicationContext(),"Error updating the file", Toast.LENGTH_LONG).show();
-                                            return;
-                                        }
-
-                                        writer = new FileWriter(downloadFile,false);
-                                        writer.write(contents);
-                                        writer.flush();
-                                        writer.close();
-
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                        return;
-                                    }
-
-                                  updateLocalFileVersion(filename);
-                                    displayFiles();
-
-                                }
-                            });
-
-
-
-                        }
-
-                        else {
-                            if (getLocalFileHash(filename).equals(getServerFileHash(filename))==false){
-                                notUpdated.setVisibility(View.VISIBLE);
-                                synButton.setVisibility(View.VISIBLE);
-
-                                synButton.setOnClickListener(new View.OnClickListener() {
-                                    public void onClick(final View v) {
-                                        String url = "http://18.130.64.155/file/push";
-                                        OkHttpClient okHttpClient = new OkHttpClient();
-                                        String path=Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
-                                        String filename= (String) fileView.getText();
-                                        File uploadFile= new File(path,filename);
-                                        //getContentResolver().getType(Uri.fromFile(uploadFile))
-
-
-                                        RequestBody requestBody = new MultipartBody.Builder()
-                                                .setType(MultipartBody.FORM)
-                                                .addFormDataPart("file",filename,RequestBody.create(MediaType.parse("application/octet-stream"),uploadFile))
-                                                .addFormDataPart("version",getLocalFileVersion(filename))
-                                                .build();
-
-                                        okhttp3.Request request = new okhttp3.Request.Builder()
-                                                .url(url)
-                                                .post(requestBody)
-                                                .build();
-
-                                        Call call = okHttpClient.newCall(request);
-                                        okhttp3.Response response = null;
-
-                                        try{
-                                            response = call.execute();
-                                            String contents = response.body().string();
-
-                                            if (contents.contains("\"success\":false")) {
-                                                Toast.makeText(getApplicationContext(),"Error updating the file", Toast.LENGTH_LONG).show();
-                                                return;
-                                            }
-                                            Log.d("upload response",response.body().string());
-                                        } catch(IOException e){
-                                            e.printStackTrace();
-                                            return;
-                                        }
-
-                                        int currentVersion=Integer.parseInt(getLocalFileVersion(filename)) +1;
-
-
-                                       updateLocalFileVersion(filename,Integer.toString(currentVersion));
-
-                                        displayFiles();
-
-                                    }
-                                });
-
-
-
-
-
-                            }
-                            else{
-                                updated.setVisibility(View.VISIBLE);
-                                synButton.setVisibility(View.INVISIBLE);
-
-                            }
-
-
-                        }
-
-
-
-                    }
+            }
 
 
             return convertView;
