@@ -202,6 +202,8 @@ function stat(path, file) {
 				//////////here we have to check if the file already had a version!
 				var version = await localFileStorage(file);
 				fileObj = new File.File(file, `${path}${file}`, File.LOCAL_ONLY, false, ((stats.size / 1024) / 1024).toFixed(1), stats.mtimeMs, stats.birthtimeMs, version);
+			} else {
+				fileObj = new File.File(file, `${path}${file}`, File.LOCAL_ONLY, true, 0, 0, 0, 1);
 			}
 			resolve(fileObj);
 		});
@@ -244,8 +246,10 @@ async function statFiles(path, localFiles) {
 	for (let localFile of localFiles) {
 		//for every file call the fs.stat
 		let file = await stat(path, localFile);
-		file.setIndex(filesDetails.length);
-		filesDetails.push(file);
+		if (!file.getIsDir()) {
+			file.setIndex(filesDetails.length);
+			filesDetails.push(file);
+		}
 	}
 	return filesDetails;
 }
@@ -269,7 +273,7 @@ function getLocalFileHash(path) {
 		let hash = crypto.createHash('sha256');
 		let stream = fs.createReadStream(path);
 		stream.on('data', data => hash.update(data));
-		stream.on('end', () => { stream.close(); resolve(hash.digest('hex'))} );
+		stream.on('end', () => { stream.close(); resolve(hash.digest('hex')) });
 		stream.on('error', error => reject(error));
 	});
 }
@@ -450,7 +454,7 @@ function downloadFile(filename) {
 		"filename": filename
 	};
 	let path = watchedPath + (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') + filename;
-	request(`${config.downloadFileURL}`,
+	request(config.downloadFileURL,
 		{
 			qs: queryString
 		}, async function (error, response, body) {
