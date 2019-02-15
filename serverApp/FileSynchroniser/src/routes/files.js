@@ -13,8 +13,7 @@ let File = require('../models/file');
 // fileupload options
 router.use(fileUpload({
     //sanitize filenames
-    safeFileNames: true,
-    preserveExtension: true
+    safeFileNames: /[^\w.-\s]/gi
 }));
 
 //getFileInfo send the client a JSON with updated info about files
