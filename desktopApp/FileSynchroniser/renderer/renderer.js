@@ -1,6 +1,6 @@
 const { ipcRenderer } = require('electron');
 
-let File = require('./src/models/file.js');
+let File = require('../models/file.js');
 // hide warning regarding Content Security Policy https://developer.chrome.com/extensions/contentSecurityPolicy
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 

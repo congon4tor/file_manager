@@ -41,15 +41,16 @@ function boot() {
 			nodeIntegration: true
 		}
 	})
-	win.loadURL(`file://${__dirname}/index.html`)
-	win.once('ready-to-show', () => {
+	win.loadURL(`file://${__dirname}/src/html/login.html`)
+	win.on('ready-to-show', () => {
 		refreshScreen()
 		win.show()
 	})
 	win.on('closed', () => {
+		console.log('win closed')
 		win = null
 	})
-	// win.webContents.openDevTools();
+	// win.webContents.openDevTools({ mode: 'detach' })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var menu = Menu.buildFromTemplate([
@@ -102,9 +103,10 @@ function conflictsBoot() {
 			nodeIntegration: true
 		}
 	})
-	conflictsWin.loadURL(`file://${__dirname}/conflicts.html`)
+	conflictsWin.loadURL(`file://${__dirname}/src/html/conflicts.html`)
 	conflictsWin.setMenu(null);
 	conflictsWin.on('closed', () => {
+		console.log('conflictswin closed')
 		conflictsWin = null
 		//send message to first window to close loader 
 		win.webContents.send('closedConflicts', 'true')
@@ -112,7 +114,7 @@ function conflictsBoot() {
 	conflictsWin.once('ready-to-show', () => {
 		conflictsWin.show()
 	})
-	// conflictsWin.webContents.openDevTools();
+	// conflictsWin.webContents.openDevTools({ mode: 'detach' })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function loadDirectoryMenuOption() {
@@ -156,6 +158,14 @@ function refreshScreen() {
 		});
 	}
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ipcMain.on('login', async (event, username, password) => {
+	// login(username,password)
+	win.loadURL(`file://${__dirname}/src/html/index.html`)
+	win.webContents.on('did-finish-load', () => {
+		refreshScreen()
+	})
+})
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('refreshScreen', async (event) => {
 	refreshScreen()
