@@ -50,28 +50,37 @@ router.get('/getUsers', ensureAuthenticated, (req, res)=> {
 //Signup creates a new user account recieving a username and password
 router.post('/signup', (req, res)=>{
     if(req.body.username && req.body.password){//check the parameters are included in the request
-
-        bcrypt.genSalt(10, function(err, salt){//generate the salt for the hash
-            bcrypt.hash(req.body.password, salt, function(err, hash){//hash the password
-                if(err){
-                    console.error(err);
-                    return res.status(500).send({success: false, error:'Error saving the user in the database'});
-                }
-                //Create newUser object
-                let user = new User();
-                user.username = req.body.username;
-                user.password = hash;
-
-                user.save((err, svaedUser)=>{ //save the user to the database
-                    if (err) {
-                        console.error(err);
-                        return res.status(500).send({success: false, error:'Error saving the user in the database'});
-                    } else {
-                        //User created successfully
-                        return res.send({success: true});
-                    }
+        User.findOne({username: req.body.username}, (err, user)=>{ //check username is not taken
+            if (err) {
+                console.error(err);
+                return res.status(500).send({success: false, error: "Error searching the user in the database"});
+            }
+            if(!user){ //check if the username is taken
+                bcrypt.genSalt(10, function(err, salt){//generate the salt for the hash
+                    bcrypt.hash(req.body.password, salt, function(err, hash){//hash the password
+                        if(err){
+                            console.error(err);
+                            return res.status(500).send({success: false, error:'Error saving the user in the database'});
+                        }
+                        //Create newUser object
+                        let user = new User();
+                        user.username = req.body.username;
+                        user.password = hash;
+        
+                        user.save((err, svaedUser)=>{ //save the user to the database
+                            if (err) {
+                                console.error(err);
+                                return res.status(500).send({success: false, error:'Error saving the user in the database'});
+                            } else {
+                                //User created successfully
+                                return res.send({success: true});
+                            }
+                        });
+                    });
                 });
-            });
+            }else{ //there are no files
+                res.send({success: false, error: "Username is not available"});
+            }
         });
     }else{ //If no username or password was provided error
         return res.status(400).send({success: false, error:'A username and a password must be provided'});
