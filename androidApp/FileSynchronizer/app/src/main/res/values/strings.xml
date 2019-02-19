@@ -23,4 +23,10 @@
         <item>Locally</item>
         <item>Server</item>
     </string-array>
+    <string name="conflict">It appears to be a conflict. Choose one of the options bellow to solve</string>
+    <string-array name="conflictOptions">
+        <item>Upload anyway and replace last version</item>
+        <item>Get the latest version</item>
+        <item>Get diff file and solve manually</item>
+    </string-array>
 </resources>

@@ -74,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
+
+
     }
 
 
@@ -226,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
             return "error getting the file version";
         }
 
-        return "something went wrong";
+        return "1";
 
 
     }
@@ -649,9 +651,17 @@ public class MainActivity extends AppCompatActivity {
                             public void onClick(final View v) {
                                 String filename = (String) fileView.getText();
 
-                                if (uploadFile(filename, getLocalFileVersion(filename)).contains("\"success\":false")) {     //upload the new version of the file
-                                    Toast.makeText(getApplicationContext(), "Error updating the file", Toast.LENGTH_LONG).show();
-                                    return;
+                                String uploadResult=uploadFile(filename, getLocalFileVersion(filename)); //upload the new version of the file
+
+                                if (uploadResult.contains("\"success\":false")) {
+                                    if (uploadResult.contains("The file was not up to date, not deleting it to avoid conflicts")){
+
+
+                                    }
+                                    else {
+                                        Toast.makeText(getApplicationContext(), "Error updating the file", Toast.LENGTH_LONG).show();
+                                        return;
+                                    }
                                 }
 
 
