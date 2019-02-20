@@ -632,10 +632,11 @@ public class MainActivity extends AppCompatActivity {
                     synButton.setOnClickListener(new View.OnClickListener() {
                         public void onClick(final View v) {
                             String filename = (String) fileView.getText();     //get the filename
-                            if (downloadFile(filename).equals("error"))        //download the new version of the file
-                                return;
-
-                            updateLocalFileVersion(filename);            //update the local version file with the new version you got from the server
+                            ConflictDialog dialog = new ConflictDialog();     //create the dialog with the three conflict options
+                            Bundle args = new Bundle();
+                            args.putString("filename", filename);
+                            dialog.setArguments(args);
+                            dialog.show(getSupportFragmentManager(), "dialog");    //show the dialog
                             displayFiles();
 
                         }

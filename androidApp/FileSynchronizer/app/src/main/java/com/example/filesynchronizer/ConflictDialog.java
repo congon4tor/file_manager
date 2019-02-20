@@ -8,6 +8,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,7 +36,7 @@ public class ConflictDialog extends DialogFragment {
                                 return;
                             }
 
-                            int currentVersion = Integer.parseInt(((MainActivity)getActivity()).getLocalFileVersion(filename)) + 1;     //calculate the new version of the file
+                            int currentVersion = Integer.parseInt(((MainActivity)getActivity()).getLocalFileVersion(filename)) + 2;     //calculate the new version of the file
 
 
                             ((MainActivity)getActivity()).updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
@@ -130,12 +133,18 @@ public class ConflictDialog extends DialogFragment {
 
             }
 
+            JSONObject json=new JSONObject(contents);
+
+
             //write the contents you got into the file
             writer = new FileWriter(diffFile, false);
-            writer.write(contents);
+            writer.write(json.getString("diff"));
             writer.flush();
             writer.close();
-        } catch (IOException e) {
+
+            ((MainActivity)getActivity()).addLocalFileInfo("diff.txt",json.getString("version"));
+
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
 
