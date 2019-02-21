@@ -10,10 +10,10 @@ let isBinaryFile = require("isbinaryfile");
 let File = require('../models/file');
 
 
-//getFileInfo send the client a JSON with updated info about files
-router.get('/getInfo', (req, res)=> {
-    if(req.query.filename){
-        File.findOne({ filename: req.query.filename }, (err, file)=>{
+//getFileInfo send the client a JSON with updated info about files (must be logged is)
+router.get('/getInfo', ensureAuthenticated, (req, res)=> {
+    if(req.query.filename){ //check if client sent filter
+        File.findOne({ filename: req.query.filename, owner: req.user }, (err, file)=>{ //Search file with filename and owner = user
             if (err) {
                 console.error(err);
                 return res.status(500).send({success: false, error: "Error searching the file in the database"});
@@ -25,8 +25,8 @@ router.get('/getInfo', (req, res)=> {
             }
         });
     }else{
-        //Look for all the files in the database
-        File.find((err, files)=>{
+        //Look for all the files in the database that belong to the user
+        File.find({ owner: req.user }, (err, files)=>{
             if (err) {
                 console.error(err);
                 return res.status(500).send({success: false, error: "Error searching files in the database"});
@@ -42,15 +42,15 @@ router.get('/getInfo', (req, res)=> {
 });
 
 
-//Push recives
-router.post('/push', (req, res)=> {
+//Push function is used to upload, update or delete a file ( must be logged in)
+router.post('/push', ensureAuthenticated, (req, res)=> {
     //Check if there are files in the request
     if (req.files) {
         //Check for the file input with name file (<input type="file" name="file">)
         if (req.files.file) {
             let userFile = req.files.file;            
-            //Look in DB to see if file already exists
-            File.findOne({ filename: userFile.name }, (err, file)=>{
+            //Look in DB to see if file already exists for this user
+            File.findOne({ filename: userFile.name, owner: req.user }, (err, file)=>{
                 if (err) {
                     console.error(err);
                     return res.status(500).send({success: false, error: "Error searching files in the database"});
@@ -104,15 +104,19 @@ router.post('/push', (req, res)=> {
                         //If it does not exist create the directory
                         fs.mkdirSync(global.fileDirectory, { recursive: true });
                     }
+
+                    let newFile = new File();
+
                     //Move file to the directory
-                    userFile.mv(path.join(global.fileDirectory, userFile.name), (err)=> {
+                    userFile.mv(path.join(global.fileDirectory, newFile.id), (err)=> {
                         if (err) {
                             console.error(err);
                             return res.status(500).send({success: false, error:'Error saving the file'});
                         }
                         //Create file object to store file info in DB
-                        let newFile = new File();
                         newFile.filename = userFile.name;
+                        //Store owner
+                        newFile.owner = req.user;
                         newFile.version = 1;
                         //Calculate hash
                         let hash = crypto.createHash('sha256');
@@ -120,7 +124,7 @@ router.post('/push', (req, res)=> {
                         newFile.hash = hash.digest('hex');
                         newFile.date = new Date();
                         newFile.size = userFile.data.byteLength;
-                        newFile.path = path.join(global.fileDirectory, userFile.name);
+                        newFile.path = path.join(global.fileDirectory, newFile.id);
                         //Save file info to DB
                         newFile.save((err, savedFile) => {
                             if (err) {
@@ -141,8 +145,8 @@ router.post('/push', (req, res)=> {
     }else{ //No files uploaded
         //Check if delete flag is true
         if( req.body.delete === "true" ){ //delete == true
-            //Look in the DB to see if file exists
-            File.findOne({ filename: req.body.filename }, (err, file)=>{
+            //Look in the DB to see if file exists for this user
+            File.findOne({ filename: req.body.filename, owner: req.user }, (err, file)=>{
                 if (err) {
                     console.error(err);
                     return res.status(500).send({success: false, error: "Error searching files in the database"});
@@ -158,7 +162,7 @@ router.post('/push', (req, res)=> {
                                 return res.status(500).send({success: false, error: "Error deleting file"});
                             }
                             //Delete file info from DB
-                            File.deleteMany({ filename: req.body.filename }, function (err) {
+                            File.deleteMany({ filename: req.body.filename, owner: req.user }, function (err) {
                                 if (err) {
                                     //TODO: should resave the file to the dir
                                     console.error(err);
@@ -181,16 +185,16 @@ router.post('/push', (req, res)=> {
     }
 });
 
-//getFile recive filename from client respond with file
-router.get('/getFile', (req, res)=> {
-    //Look for the file with the specified filename in the database
-    File.findOne({filename: req.query.filename}, (err, file)=>{
+//getFile recive filename from client respond with file (must be logged in)
+router.get('/getFile', ensureAuthenticated, (req, res)=> {
+    //Look for the file with the specified filename and owner in the database
+    File.findOne({filename: req.query.filename, owner: req.user}, (err, file)=>{
         if (err) {
             console.error(err);
             return res.status(500).send({success: false, error: "Error searching files in the database"});
         }
         if(file){ //check if file exists
-            // Sends file to the client allow dotfiles means hidden files are allowed to be downloaded
+            // Sends file to the client, allow dotfiles means hidden files are allowed to be downloaded
             res.download(file.path, file.filename, {dotfiles:"allow"}, (err)=>{
                 if(err){
                     console.error(err);
@@ -203,15 +207,15 @@ router.get('/getFile', (req, res)=> {
     });
 });
 
-//getDiff recive conflict file from client respond with diff between the server version and the uploaded version
-router.post('/getDiff', (req, res)=> {
+//getDiff recive conflict file from client respond with diff between the server version and the uploaded version (must be logged in)
+router.post('/getDiff', ensureAuthenticated, (req, res)=> {
     //Check if there are files in the request
     if (req.files) {
         //Check for the file input with name file (<input type="file" name="file">)
         if (req.files.file) {
             let userFile = req.files.file;
-            //Look for the file with the specified filename in the database
-            File.findOne({filename: userFile.name}, (err, file)=>{
+            //Look for the file with the specified filename and owner in the database
+            File.findOne({filename: userFile.name, owner:req.user}, (err, file)=>{
                 if (err) {
                     console.error(err);
                     return res.status(500).send({success: false, error: "Error searching files in the database"});
@@ -251,5 +255,14 @@ router.post('/getDiff', (req, res)=> {
     }
     
 });
+
+//Access control, this function will ensure that the request comes from an authenticated user
+function ensureAuthenticated(req, res, next){
+    if (req.isAuthenticated()){ //If authenticated continue 
+        return next();
+    }else{ //If not authenticated respond with error
+        return res.status(401).send({success: false, error:'User not authenticated'});
+    }
+}
 
 module.exports = router;

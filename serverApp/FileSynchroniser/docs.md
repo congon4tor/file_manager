@@ -8,6 +8,7 @@ This function is used by the client when they want the latest information about 
 ### Request
 * Route: /file/getInfo
 * Method: GET
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -25,6 +26,7 @@ This function is used by the clients when they want to save the changes made to 
 ### Request
 * Route: /file/push
 * Method: POST 
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -48,6 +50,7 @@ This function is used by the clients when they want to download the latest versi
 ### Request
 * Route: /file/getFile
 * Method: GET 
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -65,11 +68,12 @@ This function is used by the clients when they want resolve the conflicts in a t
 ### Request
 * Route: /file/getDiff
 * Method: POST
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
     | ---           | ---                   | ---   | ---       |
-    | `file`        | The name of the file to be downloaded | File | File |
+    | `file`        | The file to be compared with the latest server version | File | File |
     | `version`        | Current version of the file used to check for conflicts | Text | Version number |
 
 ### How it works
@@ -83,6 +87,7 @@ This function is used by the clients to create a new user account giving a usern
 ### Request
 * Route: /user/signup
 * Method: POST
+* Authentication required: `false`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -101,6 +106,7 @@ This function is used by the clients to log into his/her user account.
 ### Request
 * Route: /user/login
 * Method: POST
+* Authentication required: `false`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -118,6 +124,7 @@ This function is used by the clients to log out of his/her user account.
 
 ### Request
 * Route: /user/logout
+* Authentication required: `true`
 * Method: GET
 
 
@@ -131,6 +138,7 @@ This function is used by the users to delete his/her user account.
 
 ### Request
 * Route: /user/delete
+* Authentication required: `true`
 * Method: GET
 
 

@@ -1,12 +1,17 @@
 var mongoose = require('mongoose');
+var User = require('./user');
 
 // file schema
 var fileSchema = mongoose.Schema({
     //Real filename 
     filename: {
         type: String,
-        required: true,
-        unique: true
+        required: true
+    },
+    //User that owns the file
+    owner: {
+        type: User.schema,
+        required: true
     },
     //Path relative to the fileDirectory
     path: {

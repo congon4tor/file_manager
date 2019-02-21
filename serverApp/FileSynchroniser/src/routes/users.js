@@ -25,7 +25,7 @@ router.post('/login', (req, res, next)=>{
 });
 
 //logout function
-router.get('/logout', function(req, res){
+router.get('/logout', ensureAuthenticated, function(req, res){
     req.logout();
     res.send({success:true});
 });
