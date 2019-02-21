@@ -452,7 +452,11 @@ function pushFile(path, version, index, force) {
 					win.webContents.send('synchronizeFileResult:Error', 'error')
 				}
 			} catch (error) {
-				showMessageBox('error', 'Error', 'synchronizeFile():' + error);
+				if (response.statusCode == 413) {
+					showMessageBox('error', 'Error', 'The file you tried to upload is too large and was rejected by the server.');
+				} else {
+					showMessageBox('error', 'Error', 'synchronizeFile():' + error);
+				}
 				win.webContents.send('synchronizeFileResult:Error', 'error')
 			}
 		}
