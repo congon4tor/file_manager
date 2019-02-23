@@ -18,7 +18,6 @@
 </head>
 
 <body>
-
     <div class="grandParentContaniner">
         <div class="parentContainer">
             <form id="loginForm">
@@ -30,20 +29,20 @@
                 </div>
                 <div class="container">
                     <div class="row justify-content-md-center">
-                        <div class="col">
-                            <!-- <div class="centerBlock">
-                                <button type="submit" class="btn btn-primary login-btn">Sign up</button>
-                            </div> -->
+                        <div class="centerBlock">
+                            <button value="signup" id="signup" class="btn btn-primary login-btn">Sign up</button>
                         </div>
-                        <div class="col ">
-                            <div class="centerBlock">
-                                <button type="submit" class="btn btn-primary login-btn">Login</button>
-                            </div>
+                        <div class="centerBlock">
+                            <button type="submit" value="login" id="login" class="btn btn-primary login-btn">Login</button>
                         </div>
                     </div>
                 </div>
 
             </form>
+        </div>
+        <div class="alert-bottom alert alert-danger">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            <strong id="alert-message" style="padding-right: 20px;"></strong>
         </div>
     </div>
 </body>

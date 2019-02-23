@@ -7,6 +7,10 @@ const crypto = require('crypto');
 const storage = require('electron-json-storage');
 let isBinaryFile = require("isbinaryfile");
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// jar with cookies for subsequent requests
+var jar;
+//the cookie we will set so we can delete it later 
+var cookie;
 //the watched path variable so not to read the local storage all the time
 let watchedPath;
 //the files array that is shown on the screen
@@ -19,7 +23,6 @@ let conflictsWin;
 let File = require('./src/models/file.js');
 //config file with api call strings
 let config = require('./config/configuration.js');
-//
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Promisify the request get in order to return promise and not pass callback to it 
 const get = util.promisify(request.get);
@@ -43,14 +46,12 @@ function boot() {
 	})
 	win.loadURL(`file://${__dirname}/src/html/login.html`)
 	win.on('ready-to-show', () => {
-		refreshScreen()
 		win.show()
 	})
 	win.on('closed', () => {
-		console.log('win closed')
 		win = null
 	})
-	// win.webContents.openDevTools({ mode: 'detach' })
+	win.webContents.openDevTools({ mode: 'detach' })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var menu = Menu.buildFromTemplate([
@@ -73,6 +74,13 @@ var menu = Menu.buildFromTemplate([
 			},
 			{ type: 'separator' },
 			{
+				label: 'Log out',
+				accelerator: 'CmdOrCtrl+L',
+				click() {
+					logout()
+				}
+			},
+			{
 				label: 'Exit',
 				click() {
 					app.quit()
@@ -83,7 +91,8 @@ var menu = Menu.buildFromTemplate([
 ])
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.on('ready', () => {
-	Menu.setApplicationMenu(menu);
+	//hide menus on login screen
+	Menu.setApplicationMenu(null);
 	boot();
 });
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +115,6 @@ function conflictsBoot() {
 	conflictsWin.loadURL(`file://${__dirname}/src/html/conflicts.html`)
 	conflictsWin.setMenu(null);
 	conflictsWin.on('closed', () => {
-		console.log('conflictswin closed')
 		conflictsWin = null
 		//send message to first window to close loader 
 		win.webContents.send('closedConflicts', 'true')
@@ -160,12 +168,124 @@ function refreshScreen() {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('login', async (event, username, password) => {
-	// login(username,password)
-	win.loadURL(`file://${__dirname}/src/html/index.html`)
-	win.webContents.on('did-finish-load', () => {
-		refreshScreen()
-	})
+	try {
+		let result = await login(username, password).catch((error) => { throw new Error('' + error) });
+		win.loadURL(`file://${__dirname}/src/html/index.html`)
+		win.webContents.on('did-finish-load', () => {
+			//show the menu when loging in 
+			Menu.setApplicationMenu(menu);
+			refreshScreen()
+		})
+	}
+	catch (error) {
+		win.webContents.send('login:Error', '' + error)
+	}
 })
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ipcMain.on('logout', async (event) => {
+	try {
+		let result = await logout().catch((error) => { throw new Error('' + error) });
+		win.loadURL(`file://${__dirname}/src/html/login.html`)
+		win.webContents.on('did-finish-load', () => {
+			Menu.setApplicationMenu(null);
+		})
+	}
+	catch (error) {
+		win.webContents.send('login:Error', '' + error)
+	}
+})
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ipcMain.on('signup', async (event, username, password) => {
+	try {
+		let result = await signup(username, password).catch((error) => { throw new Error('' + error) });
+		win.webContents.send('signup', 'success')
+	}
+	catch (error) {
+		win.webContents.send('signup:Error', '' + error)
+	}
+})
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+async function login(username, password) {
+	return new Promise((resolve, reject) => {
+		let formData = {
+			username: "congo",
+			password: "password1234",
+		}
+		post(config.loginURL,
+			{
+				formData: formData
+			}).then((response) => {
+				if (response.statusCode == 200) {
+					var temp = response.headers['set-cookie'][0].substr(0, response.headers['set-cookie'][0].indexOf(';'))
+					var cookieValue = temp.substr(temp.indexOf('=') + 1, temp.length);
+					cookie = request.cookie('connect.sid=' + cookieValue);
+					//refreshes the jar 
+					jar = request.jar();
+					jar.setCookie(cookie, config.genericURL);
+					resolve()
+				} else {
+					reject(JSON.parse(response.body).error)
+				}
+			}).catch((error) => { throw new Error('' + error) });
+	});
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function logout() {
+	return new Promise((resolve, reject) => {
+		get(config.logoutURL,
+			{
+				jar: jar
+			}).then((response) => {
+				if (response.statusCode == 200) {
+					//refreshes the jar to remove all previous cookies
+					jar = request.jar();
+					// hide menu
+					Menu.setApplicationMenu(null);
+					resolve()
+				} else {
+					reject(JSON.parse(response.body).error)
+				}
+			}).catch((error) => { throw new Error('' + error) });
+	});
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function deleteAccount(username, password) {
+	return new Promise((resolve, reject) => {
+		get(config.deleteAccountURL,
+			{
+				jar: jar
+			}).then((response) => {
+				if (response.statusCode == 200) {
+					//refreshes the jar to remove all previous cookies
+					jar = request.jar();
+					// hide menu
+					Menu.setApplicationMenu(null);
+					resolve()
+				} else {
+					reject(JSON.parse(response.body).error)
+				}
+			}).catch((error) => { throw new Error('' + error) });
+	});
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+async function signup(username, password) {
+	return new Promise((resolve, reject) => {
+		let formData = {
+			username: username,
+			password: password,
+		}
+		post(config.signupURL,
+			{
+				formData: formData
+			}).then((response) => {
+				if (response.statusCode == 200) {
+					resolve()
+				} else {
+					reject(JSON.parse(response.body).error)
+				}
+			}).catch((error) => { throw new Error('' + error) });
+	});
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('refreshScreen', async (event) => {
 	refreshScreen()
@@ -208,7 +328,6 @@ function stat(path, file) {
 			if (error) reject(error)
 			let fileObj;
 			if (!stats.isDirectory()) {
-				//if it is not a directory get some more stats and change the icon IS SYNC ON BEGIN IS 0 (FILE EXISTS ON DESKTOP) FOR EVERY FILE
 				//////////here we have to check if the file already had a version!
 				var version = await localFileStorage(file);
 				fileObj = new File.File(file, `${path}${file}`, File.LOCAL_ONLY, false, ((stats.size / 1024) / 1024).toFixed(1), stats.mtimeMs, stats.birthtimeMs, version);
@@ -220,7 +339,7 @@ function stat(path, file) {
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//check if file exists or not!
+//check if file exists locally in the folder or not!
 function checkExistence(path) {
 	return fs.existsSync(path) ? true : false;
 }
@@ -242,15 +361,18 @@ ipcMain.on('openFile', async (event, index) => {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //call api to get server files 
 async function getServerFiles(filename) {
-	let queryString = { "filename": filename };
-	//have two calls with filename you call to get the info for certain file, with no filename you get all info
-	const serverFiles = await get(config.getServerFilesURL, filename === '' ? null : {
-		qs: queryString
-	});
+	//have two calls with filename you call to get the info for certain file, with no filename you get all files info
+	let serverFiles;
+	if (filename === '') {
+		serverFiles = await get({ url: config.getServerFilesURL, jar: jar });
+	} else {
+		let queryString = { "filename": filename };
+		serverFiles = await get({ url: config.getServerFilesURL, jar: jar, qs: queryString });
+	}
 	return serverFiles;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//First get all server files. Then iterate through each file in the OS folder to create the view 
+//iterate through each file in the OS folder to create the view 
 async function statFiles(path, localFiles) {
 	let filesDetails = [];
 	for (let localFile of localFiles) {
@@ -290,7 +412,6 @@ function getLocalFileHash(path) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //deal with load file directory menu option
 async function loadDirectory(path) {
-	//first we will read the OS folder then we will call the api to get the files from the server and then combine the data and create the view  
 	try {
 		let serverFiles = await getServerFiles('').catch((error) => { throw new Error('Getting server files. ' + error) });
 		let files = await readDirectory(path).catch((error) => { throw new Error('Reading local folder. ' + error) });
@@ -304,11 +425,12 @@ async function loadDirectory(path) {
 			for (let localFile in localFiles) {
 				if (serverFilesArray[serverFile].filename === localFiles[localFile].filename) {
 					flag = true;
-					/////////////////FILE IS NOT SYNC WITH UPLOADED FILE 
+					//if files have different versions 
 					if (serverFilesArray[serverFile].version != localFiles[localFile].getVersion()) {
 						localFiles[localFile].setIsSync(File.DIFFERENT_VERSION);
 						localFiles[localFile].setDifferentContent(true);
 					} else {
+						//if they have the same version check the hashes to see if we should show the differences button
 						localFiles[localFile].setIsSync(File.SAME_VERSION);
 						let userFileHash = await getLocalFileHash(localFiles[localFile].getTheID());
 						if (userFileHash === serverFilesArray[serverFile].hash) { //Hash is the same file has not changed
@@ -349,7 +471,6 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 	if (isBinaryFile.isBinaryFileSync(fs.readFileSync(path), fs.lstatSync(path).size)) {
 		isBinary = true;
 	}
-
 	if (isSync == File.DIFFERENT_VERSION && differentContent) {
 		dialog.showMessageBox(win, {
 			type: 'warning',
@@ -388,7 +509,8 @@ function getDiff(path, version) {
 	}
 	request.post(config.getDiffURL,
 		{
-			formData: formData
+			formData: formData,
+			jar: jar
 		},
 		function (error, response, body) {
 			try {
@@ -402,11 +524,11 @@ function getDiff(path, version) {
 					})
 				}
 				if (error || response.statusCode != 200) {
-					showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+					showMessageBox('error', 'Error', 'getDiff():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
 					win.webContents.send('synchronizeFileResult:Error', 'error')
 				}
 			} catch (error) {
-				showMessageBox('error', 'Error', 'synchronizeFile():' + error);
+				showMessageBox('error', 'Error', 'getDiff():' + error);
 				win.webContents.send('synchronizeFileResult:Error', 'error')
 			}
 		}
@@ -422,7 +544,8 @@ function pushFile(path, version, index, force) {
 	}
 	request.post(config.syncFileURL,
 		{
-			formData: formData
+			formData: formData,
+			jar: jar
 		},
 		function (error, response, body) {
 			try {
@@ -448,11 +571,11 @@ function pushFile(path, version, index, force) {
 					});
 				}
 				if (error || response.statusCode != 200) {
-					showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+					showMessageBox('error', 'Error', 'pushFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
 					win.webContents.send('synchronizeFileResult:Error', 'error')
 				}
 			} catch (error) {
-				showMessageBox('error', 'Error', 'synchronizeFile():' + error);
+				showMessageBox('error', 'Error', 'pushFile():' + error);
 				win.webContents.send('synchronizeFileResult:Error', 'error')
 			}
 		}
@@ -466,7 +589,8 @@ function downloadFile(filename) {
 	let path = watchedPath + (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') + filename;
 	request(config.downloadFileURL,
 		{
-			qs: queryString
+			qs: queryString,
+			jar: jar
 		}, async function (error, response, body) {
 			try {
 				if (error || response.statusCode != 200) {
@@ -570,7 +694,8 @@ async function deleteServerFile(filename, version) {
 		}
 		post(config.syncFileURL,
 			{
-				formData: formData
+				formData: formData,
+				jar: jar
 			}).then((response) => {
 				if (response.statusCode == 200) {
 					resolve()

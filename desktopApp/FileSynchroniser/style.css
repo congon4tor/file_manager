@@ -58,7 +58,7 @@ Html, body {
   border-color: #353535;
 }
 
-.synchronize {
+.roundButton {
   padding: 15px 20px;
   line-height: 1.33;
   border-radius: 100%;
@@ -66,7 +66,58 @@ Html, body {
 
 #syncButton {
   position: fixed;
-  bottom: 14px;
+  bottom: 10px;
+  right: 10px;
+}
+
+/**************************/
+
+/* for the logout button  */
+
+/**************************/
+
+.btn-danger {
+  color: #fff;
+  background-color: #d9534f;
+  border-color: #d9534f;
+}
+
+.btn-danger:hover {
+  color: #d9534f;
+  background-color: #fff;
+  border-color: #d9534f;
+}
+
+.btn-danger::selection {
+  color: #d9534f;
+  background-color: #fff;
+  border-color: #d9534f;
+}
+
+.btn-danger.focus, .btn-primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-danger:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle {
+  color: #fff;
+  background-color: #000000;
+  border-color: #000000;
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-danger:not(:disabled):not(.disabled).active:focus, .btn-primary:not(:disabled):not(.disabled):active:focus, .show>.btn-primary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-danger:active {
+  color: #353535;
+  background-color: #fff;
+  border-color: #d9534f;
+}
+
+#logoutButton {
+  position: fixed;
+  bottom: 78px;
   right: 10px;
 }
 
@@ -155,6 +206,6 @@ Html, body {
   margin: auto;
 }
 
-.login-btn{
+.login-btn {
   width: 90px !important;
 }
