@@ -46,4 +46,6 @@
     <string name="register">Register</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+    <string name="url">18.130.64.155</string>
+
 </resources>

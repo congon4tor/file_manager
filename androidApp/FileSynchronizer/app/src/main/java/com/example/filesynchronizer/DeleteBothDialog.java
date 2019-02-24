@@ -58,7 +58,7 @@ public class DeleteBothDialog extends DialogFragment {
 
                             if (mSelectedItems.get(i).toString().equals("1")){
                                 String filename=getArguments().getString("filename");
-                                String url = "http://18.130.64.155/file/push";
+                                String url = "http://10.0.2.2:3000/file/push";
                                 OkHttpClient okHttpClient = new OkHttpClient();
                                 RequestBody requestBody = new MultipartBody.Builder()
                                         .setType(MultipartBody.FORM)

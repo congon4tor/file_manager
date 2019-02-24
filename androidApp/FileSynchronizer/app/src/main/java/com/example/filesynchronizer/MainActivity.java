@@ -1,33 +1,46 @@
 package com.example.filesynchronizer;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.StrictMode;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import android.widget.*;
-import java.io.File;
-import okhttp3.*;
-import android.os.Environment;
-import android.Manifest;
-import com.android.volley.toolbox.*;
-import com.android.volley.*;
-import org.json.*;
-import android.os.StrictMode;
-import java.io.*;
-import java.security.MessageDigest;
-import java.nio.charset.StandardCharsets;
-import android.support.v4.widget.SwipeRefreshLayout;
+
+import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 
 
 
@@ -37,6 +50,13 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> fileNames;
     ArrayList<String> serverNames;
     ArrayList<FileStatus> statusList;
+    SharedPreferences savedState;
+    SharedPreferences savedUsername;
+    SharedPreferences savedPassword;
+    //OkHttpClient okHttpClient = new OkHttpClient();
+    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .cookieJar(LogInForm.cookieJar)
+            .build();
 
 
 
@@ -102,42 +122,60 @@ public class MainActivity extends AppCompatActivity {
     public void displayFiles() {
         fileList = (ListView) findViewById(R.id.fileList); //create the ListView to display the file names
 
+
         readFiles();
         //readFilesFromServer();
-        String url = "http://18.130.64.155/file/getInfo";
+        String url = "http://10.0.2.2:3000/file/getInfo";
         serverNames = new ArrayList<>();
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (com.android.volley.Request.Method.GET, url, null, new com.android.volley.Response.Listener<JSONObject>() {
 
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        //Log.d("Response: " , response.toString());
+        okhttp3.Request request = new okhttp3.Request.Builder()     //build the request to the server to get information of a file in json format
+                .url(url)
+                .build();
 
+        okhttp3.Response response = null;
 
-                        try {
-                            for (int i = 0; i < response.getJSONArray("files").length(); i++)
-                                serverNames.add(response.getJSONArray("files").getJSONObject(i).get("filename").toString());
+        try {
+            response = okHttpClient.newCall(request).execute();        // execute the request
+            String contents = response.body().string();            //get the response contents
+            JSONObject json = new JSONObject(contents);        //get the json form the response
 
-                            getLists();
-                            FileAdapter fileAdapter = new FileAdapter();      //create the adapter
-                            fileList.setAdapter(fileAdapter);
+            for (int i = 0; i < json.getJSONArray("files").length(); i++)
+                serverNames.add(json.getJSONArray("files").getJSONObject(i).get("filename").toString());
 
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new com.android.volley.Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(getApplicationContext(), "Error connecting to the server please try again", Toast.LENGTH_LONG).show();
-
-                    }
-                });
+            getLists();
+            FileAdapter fileAdapter = new FileAdapter();      //create the adapter
+            fileList.setAdapter(fileAdapter);
 
 
-        HTTPHandler.getInstance(this).addToRequestQueue(jsonObjectRequest);  // Access the RequestQueue through your singleton class.
+
+        } catch (IOException e) {
+            Toast.makeText(getApplicationContext(), "Error connecting to the server please try again", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        } catch (JSONException e) {
+            Toast.makeText(getApplicationContext(), "Error connecting to the server please try again", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+
+        Button logoutButton=(Button) findViewById(R.id.logoutButton);
+
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(final View v) {
+                savedState = getSharedPreferences("login",MODE_PRIVATE);
+                savedUsername = getSharedPreferences("username",MODE_PRIVATE);
+                savedPassword = getSharedPreferences("password",MODE_PRIVATE);
+                savedState.edit().putBoolean("logged",false).apply();
+                savedUsername.edit().putString("username","").apply();
+                savedPassword.edit().putString("password","").apply();
+
+                Intent intent = new Intent(MainActivity.this, LogInForm.class);
+                startActivity(intent);
+                finish();
+
+            }
+
+        });
+
     }
 
     //check if a file name exists in a list of filenames
@@ -172,9 +210,9 @@ public class MainActivity extends AppCompatActivity {
 
     //get the file version of a specific file from the server
     public String getServerFileVersion(String filename) {
-        OkHttpClient okHttpClient = new OkHttpClient();
 
-        String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
+
+        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
         FileWriter writer = null;
         okhttp3.Request request = new okhttp3.Request.Builder()     //build the request to the server to get information of a file in json format
                 .url(url)
@@ -338,9 +376,9 @@ public class MainActivity extends AppCompatActivity {
 
     //get the hash value of a specific file from the server
     public String getServerFileHash(String filename) {
-        OkHttpClient okHttpClient = new OkHttpClient();
 
-        String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
+
+        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
         FileWriter writer = null;
         okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(url)
@@ -406,8 +444,8 @@ public class MainActivity extends AppCompatActivity {
     //sends a file to the server
     public String uploadFile(String filename, String version) {
 
-        String url = "http://18.130.64.155/file/push";
-        OkHttpClient okHttpClient = new OkHttpClient();
+        String url = "http://10.0.2.2:3000/file/push";
+
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory of the file you want to send to server
         File uploadFile = new File(path, filename);     //get the object of the file you want to upload in that directory
 
@@ -439,10 +477,10 @@ public class MainActivity extends AppCompatActivity {
 
     //download a file from the server
     public String downloadFile(String filename) {
-        OkHttpClient okHttpClient = new OkHttpClient();
+
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory where the file will be saved
         File downloadFile = new File(path, filename);    //get the file object you will save the contents in
-        String url = "http://18.130.64.155/file/getFile?filename=" + filename;
+        String url = "http://10.0.2.2:3000/file/getFile?filename=" + filename;
         FileWriter writer = null;
 
         //build request to get the file from the server
