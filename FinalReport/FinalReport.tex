@@ -1,0 +1,103 @@
+%%%%%%%%%%%%%%%%
+% Final Report %
+%%%%%%%%%%%%%%%%
+
+\documentclass[11pt]{article}
+
+%%%%%%%%%%%%%%%%%%%%
+% Loading Packages %
+%%%%%%%%%%%%%%%%%%%%
+
+\usepackage[hidelinks,pdfpagelabels=false]{hyperref}
+\usepackage[table]{xcolor}
+\usepackage{adjustbox}
+\usepackage[backend=bibtex, sorting=none, style=numeric-comp, defernumbers]{biblatex}
+
+%%%%%%%%%%%%%%
+% Page Setup %
+%%%%%%%%%%%%%%
+
+\addbibresource{bibliography.bib}
+\setlength\bibitemsep{\baselineskip} % Adjust bibliography entries spacing to make more readable
+
+%%%%%%%%%%%%%%%%%%%%%
+% START OF DOCUMENT %
+%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%
+% COVER PAGE %
+%%%%%%%%%%%%%%
+
+\begin{titlepage}
+	
+	\centering
+	
+	\hspace{0pt}
+	\vspace*{\fill}
+	
+	\includegraphics*[scale = 1.0]{graphics/kcl-logo-colour.pdf}
+	
+	\hspace{0pt}
+	\vspace*{\fill}
+	
+	\resizebox{\textwidth}{!}{\huge\textbf{Faculty of Natural \& Mathematical Sciences}} \\[8mm]
+	\large\emph{7CCSMGPR -- Group Project} \\[5mm]
+	
+	\rule{\linewidth}{0.5mm} \\[4mm]
+	{\Large \bfseries Assignment 1 of 1 -- Final Report (Default Team)} \\
+	\rule{\linewidth}{0.5mm} \\[8mm]
+	\begin{minipage}[t]{0.5\textwidth}
+		\begin{flushleft}
+			\large
+			\textit{Authors} \\
+			\mbox{Alain \textsc{Doebeli}} \\ %(ID: 1873491)} \\
+			\mbox{Christakis \textsc{Vasiliou}} \\ %(ID: 1868733)} \\
+			\mbox{Ignacio \textsc{Dominguez Garcia-Guijas}} \\ %(ID: 1877590)} \\
+			\mbox{James \textsc{Kayongo}} \\ %(ID: 1822663)} \\
+			\mbox{Konstantinos \textsc{Oikonomou}} \\ %(ID: 1879775)} \\
+			\mbox{Nikolaos \textsc{Rizos}} \\ %(ID: 1879867)} \\
+		\end{flushleft}
+	\end{minipage}
+	~
+	\begin{minipage}[t]{0.4\textwidth}
+		\begin{flushright}
+			\large
+			\textit{Module Tutor} \\
+			Dr. Laurence \textsc{Tratt}
+		\end{flushright}
+	\end{minipage}
+	
+	\vspace*{\fill}
+	\hspace{0pt}
+	
+	{\large{\today}} % Today's date
+	
+	\vspace*{\fill}
+	\hspace{0pt}
+	
+\end{titlepage}
+
+%%%%%%%%%%%
+% SECTION %
+%%%%%%%%%%%
+
+\section{Section}
+
+\subsection{Subsection}
+
+%%%%%%%%%%%%%%
+% REFERENCES %
+%%%%%%%%%%%%%%
+
+\printbibheading[title={References},heading=bibintoc]
+\nocite{*}
+\printbibliography[keyword=cite,heading=none]
+\printbibliography[keyword=nocite,heading=none]
+
+%%%%%%%%%%%%%%%%%%%
+% END OF DOCUMENT %
+%%%%%%%%%%%%%%%%%%%
+
+\end{document}
