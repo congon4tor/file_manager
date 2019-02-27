@@ -1,20 +1,19 @@
 package com.example.filesynchronizer;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.DialogFragment;
-import android.app.Dialog;
-import android.os.Bundle;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import okhttp3.Call;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
-import java.util.ArrayList;
-import android.util.Log;
 
 
 public class DeleteBothDialog extends DialogFragment {
@@ -46,6 +45,9 @@ public class DeleteBothDialog extends DialogFragment {
                 .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
+                        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                                .cookieJar(LogInForm.cookieJar)
+                                .build();
                         for (int i=0;i<mSelectedItems.size();i++){
                             if (mSelectedItems.get(i).toString().equals("0")){
                                 String filename=getArguments().getString("filename");
@@ -59,7 +61,6 @@ public class DeleteBothDialog extends DialogFragment {
                             if (mSelectedItems.get(i).toString().equals("1")){
                                 String filename=getArguments().getString("filename");
                                 String url = "http://10.0.2.2:3000/file/push";
-                                OkHttpClient okHttpClient = new OkHttpClient();
                                 RequestBody requestBody = new MultipartBody.Builder()
                                         .setType(MultipartBody.FORM)
                                         .addFormDataPart("filename",filename)

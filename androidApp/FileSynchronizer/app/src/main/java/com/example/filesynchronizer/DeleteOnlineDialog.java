@@ -1,24 +1,22 @@
 package com.example.filesynchronizer;
-import android.os.Environment;
-import android.support.v4.app.DialogFragment;
-import android.app.Dialog;
-import android.os.Bundle;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
-import android.util.Log;
-import android.widget.Toast;
+import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 
-import java.io.File;
 import java.io.IOException;
 
 import okhttp3.Call;
-import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 
 
 public class DeleteOnlineDialog extends DialogFragment {
+
+
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
@@ -28,7 +26,9 @@ public class DeleteOnlineDialog extends DialogFragment {
                     public void onClick(DialogInterface dialog, int id) {
                         String filename=getArguments().getString("filename");
                         String url = "http://10.0.2.2:3000/file/push";
-                        OkHttpClient okHttpClient = new OkHttpClient();
+                        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                                .cookieJar(LogInForm.cookieJar)
+                                .build();
                         RequestBody requestBody = new MultipartBody.Builder()
                                 .setType(MultipartBody.FORM)
                                 .addFormDataPart("filename",filename)

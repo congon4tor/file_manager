@@ -164,11 +164,13 @@ public class MainActivity extends AppCompatActivity {
                 savedState = getSharedPreferences("login",MODE_PRIVATE);
                 savedUsername = getSharedPreferences("username",MODE_PRIVATE);
                 savedPassword = getSharedPreferences("password",MODE_PRIVATE);
-                savedState.edit().putBoolean("logged",false).apply();
-                savedUsername.edit().putString("username","").apply();
-                savedPassword.edit().putString("password","").apply();
+                savedState.edit().putBoolean("logged",false).apply();      //set logged status as false
+                savedUsername.edit().putString("username","").apply();     //delete logged username
+                savedPassword.edit().putString("password","").apply();     //delete logged password
 
                 logout();
+                File file = new File(getFilesDir(), "fileinfo.txt");
+                file.delete();
 
                 Intent intent = new Intent(MainActivity.this, LogInForm.class);
                 startActivity(intent);
@@ -265,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (IOException e) {
             e.printStackTrace();
-            return "error getting the file version";
+            return "1";
         }
 
         return "1";

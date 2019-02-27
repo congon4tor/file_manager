@@ -69,7 +69,9 @@ public class ConflictDialog extends DialogFragment {
     public String forceUpload(String filename, String version) {
 
         String url = "http://10.0.2.2:3000/file/push";
-        OkHttpClient okHttpClient = new OkHttpClient();
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .cookieJar(LogInForm.cookieJar)
+                .build();
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory of the file you want to send to server
         File uploadFile = new File(path, filename);     //get the object of the file you want to upload in that directory
 
@@ -102,7 +104,9 @@ public class ConflictDialog extends DialogFragment {
 
     public void getDiff(String filename, String version){
         String url = "http://10.0.2.2:3000/file/getDiff";
-        OkHttpClient okHttpClient = new OkHttpClient();
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .cookieJar(LogInForm.cookieJar)
+                .build();
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory of the file you want to send to server
         File uploadFile = new File(path, filename);     //get the object of the file you want to upload in that directory
         File diffFile=new File(path,filename);
