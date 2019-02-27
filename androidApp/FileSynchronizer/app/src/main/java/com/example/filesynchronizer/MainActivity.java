@@ -168,6 +168,8 @@ public class MainActivity extends AppCompatActivity {
                 savedUsername.edit().putString("username","").apply();
                 savedPassword.edit().putString("password","").apply();
 
+                logout();
+
                 Intent intent = new Intent(MainActivity.this, LogInForm.class);
                 startActivity(intent);
                 finish();
@@ -534,6 +536,27 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+
+    }
+
+    public void logout(){
+
+
+        String url = "http://10.0.2.2:3000/user/logout";
+
+        //build request to get the file from the server
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .build();
+
+        okhttp3.Response response = null;
+        try {
+            response = okHttpClient.newCall(request).execute();   //get the response
+            String contents = response.body().string();       //save the contents of the file into a string
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 

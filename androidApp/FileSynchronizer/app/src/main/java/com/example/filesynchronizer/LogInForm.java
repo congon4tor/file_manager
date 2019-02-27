@@ -9,6 +9,7 @@ import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -71,13 +72,13 @@ public class LogInForm extends AppCompatActivity {
             }
         });
 
-        savedState = getSharedPreferences("login",MODE_PRIVATE);
-        savedUsername = getSharedPreferences("username",MODE_PRIVATE);
-        savedPassword = getSharedPreferences("password",MODE_PRIVATE);
+        savedState = getSharedPreferences("login",MODE_PRIVATE);     //get logged state
+        savedUsername = getSharedPreferences("username",MODE_PRIVATE);  //get logged username
+        savedPassword = getSharedPreferences("password",MODE_PRIVATE);  //get logged password
 
-        if(savedState.getBoolean("logged",false)){
+        if(savedState.getBoolean("logged",false)){    //check if user is logged in
             String url = "http://10.0.2.2:3000/user/login";
-            OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            OkHttpClient okHttpClient = new OkHttpClient.Builder()    //make request to get the active session cookie
                     .cookieJar(cookieJar)
                     .build();
 
@@ -97,7 +98,7 @@ public class LogInForm extends AppCompatActivity {
             try {
                 response = okHttpClient.newCall(request).execute();        // execute the request
 
-                Intent intent = new Intent(LogInForm.this, MainActivity.class);
+                Intent intent = new Intent(LogInForm.this, MainActivity.class);       //open the main activity page
                 startActivity(intent);
                 finish();
 
@@ -111,6 +112,7 @@ public class LogInForm extends AppCompatActivity {
 
     }
 
+    //action to perform when user clicks login
     public void logIn(){
         Button loginButton=(Button) findViewById(R.id.loginButton);
 
@@ -119,8 +121,8 @@ public class LogInForm extends AppCompatActivity {
             public void onClick(View v) {
 
 
-        EditText usernameText=(EditText) findViewById(R.id.username);
-        EditText passwordText=(EditText) findViewById(R.id.password);
+        EditText usernameText=(EditText) findViewById(R.id.username);    //get username from textbox
+        EditText passwordText=(EditText) findViewById(R.id.password);    //get password from textbox
 
         String username=usernameText.getText().toString();
         String password=passwordText.getText().toString();
@@ -131,7 +133,7 @@ public class LogInForm extends AppCompatActivity {
                 String url = "http://10.0.2.2:3000/user/login";
 
 
-
+               //execute login request
 
 
                 OkHttpClient okHttpClient = new OkHttpClient.Builder()
@@ -158,18 +160,19 @@ public class LogInForm extends AppCompatActivity {
 
                     //get the response contents
 
-                    if (contents.contains("\"success\":true")){
+                    if (contents.contains("\"success\":true")){     //check if login is successfull
                         Intent intent = new Intent(LogInForm.this, MainActivity.class);
                         startActivity(intent);
-                        savedState.edit().putBoolean("logged",true).apply();
-                        savedUsername.edit().putString("username",username).apply();
-                        savedPassword.edit().putString("password",password).apply();
+                        savedState.edit().putBoolean("logged",true).apply();    //make state as logged
+                        savedUsername.edit().putString("username",username).apply();   //save logged username
+                        savedPassword.edit().putString("password",password).apply();   //save logged password
                         finish();
 
 
                     }
                     else {
                         Toast.makeText(getApplicationContext(), "Wrong Username or Password", Toast.LENGTH_LONG).show();
+                        Log.d("response",contents);
 
                     }
 

@@ -43,6 +43,19 @@ public class RegisterForm extends AppCompatActivity {
             register();
 
         }
+
+
+        Button cancelButton=(Button) findViewById(R.id.cancelButton);
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(RegisterForm.this, LogInForm.class);     //go back to login activity
+                startActivity(intent);
+            }
+        });
+
+
     }
 
     public void register(){
@@ -61,13 +74,13 @@ public class RegisterForm extends AppCompatActivity {
                 EditText passwordText=(EditText) findViewById(R.id.password);
                 EditText confirmPasswordText=(EditText) findViewById(R.id.confirmPassword);
 
-                String username=usernameText.getText().toString();
-                String password=passwordText.getText().toString();
-                String confirmPassword=confirmPasswordText.getText().toString();
+                String username=usernameText.getText().toString();  //get new username
+                String password=passwordText.getText().toString();  //get new password
+                String confirmPassword=confirmPasswordText.getText().toString();  //get confirm password
 
-               if (password.equals(confirmPassword)) {
+               if (password.equals(confirmPassword)) {         //check weather password field equals confirm password field
 
-
+                  //execute the register request
                    String url = "http://10.0.2.2:3000/user/signup";
 
                    RequestBody requestBody = new MultipartBody.Builder()
@@ -91,8 +104,9 @@ public class RegisterForm extends AppCompatActivity {
                        //get the response contents
 
                        if (contents.contains("\"success\":true")) {
-                           Intent intent = new Intent(RegisterForm.this, LogInForm.class);
+                           Intent intent = new Intent(RegisterForm.this, LogInForm.class);     //go back to login activity
                            startActivity(intent);
+                           Toast.makeText(getApplicationContext(), "User created successfully", Toast.LENGTH_LONG).show();
 
                        } else {
                            Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_LONG).show();

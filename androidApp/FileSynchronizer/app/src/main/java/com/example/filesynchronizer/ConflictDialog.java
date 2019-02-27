@@ -105,7 +105,7 @@ public class ConflictDialog extends DialogFragment {
         OkHttpClient okHttpClient = new OkHttpClient();
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory of the file you want to send to server
         File uploadFile = new File(path, filename);     //get the object of the file you want to upload in that directory
-        File diffFile=new File(path,"diff.txt");
+        File diffFile=new File(path,filename);
         FileWriter writer = null;
 
         //post request to send the file from the server
