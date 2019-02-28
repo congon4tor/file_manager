@@ -169,7 +169,8 @@ function refreshScreen() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('login', async (event, username, password) => {
 	try {
-		let result = await login(username, password).catch((error) => { throw new Error('' + error) });
+		watchedPath=null;
+		let result = await login(username, password).catch((error) => { console.log('bbbbbbbb'); throw new Error('' + error) });
 		win.loadURL(`file://${__dirname}/src/html/index.html`)
 		win.webContents.on('did-finish-load', () => {
 			//show the menu when loging in 
@@ -184,6 +185,7 @@ ipcMain.on('login', async (event, username, password) => {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('logout', async (event) => {
 	try {
+		showMessageBox('warning', 'Warning', 'All pending local changes will not be synchronised');
 		let result = await logout().catch((error) => { throw new Error('' + error) });
 		win.loadURL(`file://${__dirname}/src/html/login.html`)
 		win.webContents.on('did-finish-load', () => {
@@ -208,8 +210,8 @@ ipcMain.on('signup', async (event, username, password) => {
 async function login(username, password) {
 	return new Promise((resolve, reject) => {
 		let formData = {
-			username: "congo",
-			password: "password1234",
+			username: username,
+			password: password,
 		}
 		post(config.loginURL,
 			{
@@ -226,7 +228,7 @@ async function login(username, password) {
 				} else {
 					reject(JSON.parse(response.body).error)
 				}
-			}).catch((error) => { throw new Error('' + error) });
+			}).catch((error) => { reject('' + error) });
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,11 +243,28 @@ function logout() {
 					jar = request.jar();
 					// hide menu
 					Menu.setApplicationMenu(null);
+					clearLocalStorage();
 					resolve()
 				} else {
 					reject(JSON.parse(response.body).error)
 				}
 			}).catch((error) => { throw new Error('' + error) });
+	});
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function clearLocalStorage() {
+	storage.getAll(function (error, data) {
+		if (error) throw error;
+		for (let file in totalFiles) {
+			storage.remove(totalFiles[file].filename, function (error) {
+				console.log('removed'+totalFiles[file].filename)
+				if (error) throw error;
+			});
+		}
+		storage.remove('path', function (error) {
+			console.log('removed path')
+			if (error) throw error;
+		});
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -493,6 +512,9 @@ ipcMain.on('synchronizeFile', async (event, index, filename) => {
 				pushFile(path, version, index, "true");
 			} else if ((!isBinary && resp == 2) || (isBinary && resp == 1)) {
 				downloadFile(filename);
+			}
+			if ((isBinary && resp == 2) || (!isBinary && resp == 3)) {
+				win.webContents.send('synchronizeFileResult:Error', 'error')
 			}
 		})
 	} else {

@@ -25,21 +25,18 @@
                     <input type="username" class="form-control" id="username" placeholder="Username">
                 </div>
                 <div class="form-group">
-                    <input type="password" class="form-control" id="password" placeholder="Password">
+                    <input type="password" class="form-control" id="password" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" placeholder="Confirm Password" class="form-control" id="confirm_password" required>
                 </div>
                 <div class="container">
                     <div class="row justify-content-md-center">
                         <div class="centerBlock">
-                            <small class="form-text text-muted">Not a member yet?</small>
-                            <input type="button" class="btn btn-primary login-btn" onclick="location.href='./signup.html';" value="Sign up"/>
-                        </div>
-                        <div class="centerBlock">
-                            <small class="form-text text-muted">Already a member?</small>
-                            <button type="submit" value="login" id="login" class="btn btn-primary login-btn">Login</button>
+                            <button value="signup" id="signup" class="btn btn-primary login-btn">Sign up</button>
                         </div>
                     </div>
                 </div>
-
             </form>
         </div>
         <div class="alert-bottom alert alert-danger">
@@ -49,6 +46,6 @@
     </div>
 </body>
 
-<script src="./../../renderer/loginRenderer.js"></script>
+<script src="./../../renderer/signupRenderer.js"></script>
 
 </html>

@@ -209,3 +209,13 @@ Html, body {
 .login-btn {
   width: 90px !important;
 }
+
+/**********************/
+
+/* font above buttons */
+
+/**********************/
+
+.small, small {
+  font-size: 70%;
+}
