@@ -36,6 +36,12 @@ db.on('error', (err) => {
 //Set up the logger
 app.use(logger('[:date] - :method :url - :status -- :response-time'));
 
+// fileupload options
+app.use(fileUpload({
+    //sanitize filenames
+    safeFileNames: /[^\w.-\s]/gi
+}));
+
 //Set up bodyparser for receiving JSON in body
 app.use(express.json());
 
