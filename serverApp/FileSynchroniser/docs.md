@@ -8,6 +8,7 @@ This function is used by the client when they want the latest information about 
 ### Request
 * Route: /file/getInfo
 * Method: GET
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -25,6 +26,7 @@ This function is used by the clients when they want to save the changes made to 
 ### Request
 * Route: /file/push
 * Method: POST 
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -48,6 +50,7 @@ This function is used by the clients when they want to download the latest versi
 ### Request
 * Route: /file/getFile
 * Method: GET 
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
@@ -65,12 +68,79 @@ This function is used by the clients when they want resolve the conflicts in a t
 ### Request
 * Route: /file/getDiff
 * Method: POST
+* Authentication required: `true`
 * Parameters: 
 
     | Parameter     | Description           | Type  | Values    |
     | ---           | ---                   | ---   | ---       |
-    | `file`        | The name of the file to be downloaded | File | File |
+    | `file`        | The file to be compared with the latest server version | File | File |
     | `version`        | Current version of the file used to check for conflicts | Text | Version number |
 
 ### How it works
 This function searches for a file in the database with the same filename as the `file` provided. If it exists it will check the hash of the uploaded file with the one in the server. If there has been changes to the `file` it checks the file version to check that there is a conflict. If there is a conflict it checks if the file is a text file or a binary file since diff will not work with binary files. If it is a text file a json response is generated with the `diff` of the latest version in the server and the uploaded `file` and a `version` equal to the latest version. 
+
+## 5. Create a new user account (Sign up)
+
+### Description
+This function is used by the clients to create a new user account giving a username and a password.
+
+### Request
+* Route: /user/signup
+* Method: POST
+* Authentication required: `false`
+* Parameters: 
+
+    | Parameter     | Description           | Type  | Values    |
+    | ---           | ---                   | ---   | ---       |
+    | `username`        | The username chosen by the user | Text | Username must be unique |
+    | `password`        | The password chosen by the user | Text | Password |
+
+### How it works
+This function checks that the `username` is not already being used and saves the users `username` and a salted hash of the `password` in the database.
+
+## 6. Log in
+
+### Description
+This function is used by the clients to log into his/her user account.
+
+### Request
+* Route: /user/login
+* Method: POST
+* Authentication required: `false`
+* Parameters: 
+
+    | Parameter     | Description           | Type  | Values    |
+    | ---           | ---                   | ---   | ---       |
+    | `username`        | The users username | Text | Username |
+    | `password`        | The users password | Text | Password |
+
+### How it works
+This function checks in the database for a user with the provided `username` and hashed `password` and returns a cookie with a session id called `connect.sid`. This cookie can then be used in other requests to authenticate.
+
+## 7. Log out
+
+### Description
+This function is used by the clients to log out of his/her user account.
+
+### Request
+* Route: /user/logout
+* Authentication required: `true`
+* Method: GET
+
+
+### How it works
+This function gets the current user from the cookie and terminates his/her session.
+
+## 8. Delete user account
+
+### Description
+This function is used by the users to delete his/her user account.
+
+### Request
+* Route: /user/delete
+* Authentication required: `true`
+* Method: GET
+
+
+### How it works
+This function gets the current user from the cookie and deletes his/her user from the database and terminates the session.
