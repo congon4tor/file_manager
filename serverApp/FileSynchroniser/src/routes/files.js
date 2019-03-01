@@ -9,13 +9,6 @@ let isBinaryFile = require("isbinaryfile");
 
 let File = require('../models/file');
 
-
-// fileupload options
-router.use(fileUpload({
-    //sanitize filenames
-    safeFileNames: /[^\w.-\s]/gi
-}));
-
 //getFileInfo send the client a JSON with updated info about files (must be logged is)
 router.get('/getInfo', ensureAuthenticated, (req, res)=> {
     if(req.query.filename){ //check if client sent filter
