@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 let passport = require('passport');
 let session = require('express-session');
 let MongoStore = require('connect-mongo')(session);
+let createError = require('http-errors');
 
 
 let fileRouter = require('./routes/files');
@@ -34,13 +35,6 @@ db.on('error', (err) => {
 
 //Set up the logger
 app.use(logger('[:date] - :method :url - :status -- :response-time'));
-
-// fileupload options
-app.use(fileUpload({
-    //sanitize filenames
-    safeFileNames: true,
-    preserveExtension: true
-}));
 
 //Set up bodyparser for receiving JSON in body
 app.use(express.json());

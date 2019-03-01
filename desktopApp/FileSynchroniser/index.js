@@ -5,6 +5,7 @@ const util = require('util');
 const { shell } = require('electron');
 const crypto = require('crypto');
 const storage = require('electron-json-storage');
+let isBinaryFile = require("isbinaryfile");
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //the watched path variable so not to read the local storage all the time
 let watchedPath;
@@ -12,10 +13,12 @@ let watchedPath;
 let totalFiles = [];
 //browser window
 let win;
+//conflicts window
+let conflictsWin;
 //model of file 
 let File = require('./src/models/file.js');
 //config file with api call strings
-let configuration = require('./config/configuration.js');
+let config = require('./config/configuration.js');
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Promisify the request get in order to return promise and not pass callback to it 
@@ -26,10 +29,12 @@ const post = util.promisify(request.post);
 //create browserwindow
 function boot() {
 	win = new BrowserWindow({
-		width: 1200,
-		height: 700,
+		width: 800,
+		height: 600,
+		useContentSize: true,
 		frame: true,
 		resizable: true,
+		show: false,
 		icon: `${__dirname}/src/img/icon.png`,
 		webPreferences: {
 			//for the warning it gives on console. Security issue (?)
@@ -37,6 +42,13 @@ function boot() {
 		}
 	})
 	win.loadURL(`file://${__dirname}/index.html`)
+	win.once('ready-to-show', () => {
+		refreshScreen()
+		win.show()
+	})
+	win.on('closed', () => {
+		win = null
+	})
 	// win.webContents.openDevTools();
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,12 +80,40 @@ var menu = Menu.buildFromTemplate([
 		]
 	},
 ])
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.on('ready', () => {
 	Menu.setApplicationMenu(menu);
 	boot();
 });
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function conflictsBoot() {
+	conflictsWin = new BrowserWindow({
+		parent: win,
+		modal: true,
+		width: 800,
+		height: 400,
+		useContentSize: true,
+		frame: true,
+		resizable: true,
+		show: false,
+		icon: `${__dirname}/src/img/diff.png`,
+		webPreferences: {
+			//for the warning it gives on console. Security issue (?)
+			nodeIntegration: true
+		}
+	})
+	conflictsWin.loadURL(`file://${__dirname}/conflicts.html`)
+	conflictsWin.setMenu(null);
+	conflictsWin.on('closed', () => {
+		conflictsWin = null
+		//send message to first window to close loader 
+		win.webContents.send('closedConflicts', 'true')
+	})
+	conflictsWin.once('ready-to-show', () => {
+		conflictsWin.show()
+	})
+	// conflictsWin.webContents.openDevTools();
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function loadDirectoryMenuOption() {
 	dialog.showOpenDialog({
@@ -121,27 +161,51 @@ ipcMain.on('refreshScreen', async (event) => {
 	refreshScreen()
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function localFileStorage(file) {
+	return new Promise((resolve, reject) => {
+		storage.has(file, (error, hasKey) => {
+			if (error) throw error;
+			//if the file existed we have to read its version 
+			if (hasKey) {
+				storage.get(file, (error, data) => {
+					try {
+						if (error) throw error;
+						//and return the version
+						resolve(data.version)
+					} catch (error) {
+						showMessageBox('error', 'Error', 'storage' + error);
+						reject(error);
+					}
+				})
+			} else {
+				//if the file is new then we create the storage for it
+				storage.set(file, { filename: file, version: 1 }, function (error) {
+					if (error) reject(error)
+					resolve(1)
+				})
+			}
+		})
+	});
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //get info on each file
 function stat(path, file) {
 	return new Promise((resolve, reject) => {
 		//determine what OS is running on to add back or slash
 		path += (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/');
 		//read each file
-		fs.stat(path + file, (error, stats) => {
+		fs.stat(path + file, async (error, stats) => {
 			if (error) reject(error)
 			let fileObj;
-			if (stats.isDirectory()) {
-				fileObj = new File(file, `${path}${file}`, true, true, 0, '', '', 1);
-			}
-			else {
+			if (!stats.isDirectory()) {
 				//if it is not a directory get some more stats and change the icon IS SYNC ON BEGIN IS 0 (FILE EXISTS ON DESKTOP) FOR EVERY FILE
-				fileObj = new File(file, `${path}${file}`, 0, false, ((stats.size / 1024) / 1024).toFixed(1), stats.mtimeMs, stats.birthtimeMs, 1);
-				storage.set(file, { filename: file, version: 1 }, function (error) {
-					if (error) reject(error)
-				})
+				//////////here we have to check if the file already had a version!
+				var version = await localFileStorage(file);
+				fileObj = new File.File(file, `${path}${file}`, File.LOCAL_ONLY, false, ((stats.size / 1024) / 1024).toFixed(1), stats.mtimeMs, stats.birthtimeMs, version);
+			} else {
+				fileObj = new File.File(file, `${path}${file}`, File.LOCAL_ONLY, true, 0, 0, 0, 1);
 			}
 			resolve(fileObj);
-
 		});
 	});
 }
@@ -170,7 +234,7 @@ ipcMain.on('openFile', async (event, index) => {
 async function getServerFiles(filename) {
 	let queryString = { "filename": filename };
 	//have two calls with filename you call to get the info for certain file, with no filename you get all info
-	const serverFiles = await get(`${configuration.getServerFilesURL}`, filename === '' ? null : {
+	const serverFiles = await get(config.getServerFilesURL, filename === '' ? null : {
 		qs: queryString
 	});
 	return serverFiles;
@@ -182,8 +246,10 @@ async function statFiles(path, localFiles) {
 	for (let localFile of localFiles) {
 		//for every file call the fs.stat
 		let file = await stat(path, localFile);
-		file.setIndex(filesDetails.length);
-		filesDetails.push(file);
+		if (!file.getIsDir()) {
+			file.setIndex(filesDetails.length);
+			filesDetails.push(file);
+		}
 	}
 	return filesDetails;
 }
@@ -207,7 +273,7 @@ function getLocalFileHash(path) {
 		let hash = crypto.createHash('sha256');
 		let stream = fs.createReadStream(path);
 		stream.on('data', data => hash.update(data));
-		stream.on('end', () => resolve(hash.digest('hex')));
+		stream.on('end', () => { stream.close(); resolve(hash.digest('hex')) });
 		stream.on('error', error => reject(error));
 	});
 }
@@ -230,13 +296,15 @@ async function loadDirectory(path) {
 					flag = true;
 					/////////////////FILE IS NOT SYNC WITH UPLOADED FILE 
 					if (serverFilesArray[serverFile].version != localFiles[localFile].getVersion()) {
-						localFiles[localFile].setIsSync(3);
+						localFiles[localFile].setIsSync(File.DIFFERENT_VERSION);
+						localFiles[localFile].setDifferentContent(true);
 					} else {
+						localFiles[localFile].setIsSync(File.SAME_VERSION);
 						let userFileHash = await getLocalFileHash(localFiles[localFile].getTheID());
 						if (userFileHash === serverFilesArray[serverFile].hash) { //Hash is the same file has not changed
-							localFiles[localFile].setIsSync(1);
+							localFiles[localFile].setDifferentContent(false);
 						} else {//file is changed so show fix button
-							localFiles[localFile].setIsSync(3);
+							localFiles[localFile].setDifferentContent(true);
 						}
 					}
 					break;
@@ -244,7 +312,7 @@ async function loadDirectory(path) {
 			}
 			if (!flag) {
 				//HERE WE ADD FILES THAT ARE ON SERVER BUT NOT ON LOCAL FOLDER 
-				fileObj = new File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, 2, false, ((serverFilesArray[serverFile].size / 1024) / 1024).toFixed(1), serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
+				fileObj = new File.File(serverFilesArray[serverFile].filename, serverFilesArray[serverFile].path, File.SERVER_ONLY, false, ((serverFilesArray[serverFile].size / 1024) / 1024).toFixed(1), serverFilesArray[serverFile].date, serverFilesArray[serverFile].date, serverFilesArray[serverFile].version);
 				fileObj.setIndex(localFiles.length + filesView.length)
 				filesView.push(fileObj);
 			}
@@ -262,94 +330,165 @@ async function loadDirectory(path) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //call the backend service to syncronize a file
 ipcMain.on('synchronizeFile', async (event, index, filename) => {
-	let formData;
-	let path = totalFiles[index].theID;
-	//FIRST GET VERSION WE HAVE FOR LOCAL FILE IN ORDER TO SEND IT TO API SERVICE 
-	storage.get(filename, function (error, data) {
-		try {
-			if (error) throw error;
-			formData = {
-				//API request needs version and file 
-				version: data.version,
-				file: fs.createReadStream(path),
+	let path = totalFiles[index].getTheID();
+	let isSync = totalFiles[index].getIsSync();
+	let differentContent = totalFiles[index].getDifferentContent();
+	let version = totalFiles[index].getVersion();
+	let size = totalFiles[index].getSize();
+	let isBinary = false;
+	if (isBinaryFile.isBinaryFileSync(fs.readFileSync(path), fs.lstatSync(path).size)) {
+		isBinary = true;
+	}
+
+	if (isSync == File.DIFFERENT_VERSION && differentContent) {
+		dialog.showMessageBox(win, {
+			type: 'warning',
+			cancelId: (isBinary ? 2 : 3),
+			//bug fix: when user clicks the red X should direct to cancel 
+			buttons: (isBinary ? [
+				'Upload local file and replace server file',
+				'Download from server and replace local file',
+				'Do nothing'] :
+				['See file differences',
+					'Upload local file and replace server file',
+					'Download from server and replace local file',
+					'Do nothing']),
+			title: 'Oops!',
+			message: 'Somebody else has changed the file before you on the server.'
+		}, resp => {
+			if (!isBinary && (resp == 0)) {
+				getDiff(path, version);
+			} else if ((!isBinary && resp == 1) || (isBinary && resp == 0)) {
+				pushFile(path, version, index, "true");
+			} else if ((!isBinary && resp == 2) || (isBinary && resp == 1)) {
+				downloadFile(filename);
 			}
-			request.post(`${configuration.syncFileURL}`,
-				{
-					formData: formData
-				},
-				function (error, response, body) {
-					let obj = JSON.parse(body);
-					if (!error && response.statusCode == 200) {
-						obj.theID = path;
-						obj.index = index;
-						obj.isSync = 1;
-						obj.file.date = (obj.file.date).replace(/T/, ' ').replace(/\..+/, '')
-						//on successfull response we update our version of local file and show success message on screen
-						storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
-							try {
-								if (error) throw error;
-								//also update the array of objects to show that it is sync!!
-								totalFiles[index].setIsSync(1);
-								win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
-							} catch (error) {
-								showMessageBox('error', 'Error', 'Storage:' + error);
-								win.webContents.send('synchronizeFileResult:Error', 'error')
-							}
-						});
-					}
-					if (error || response.statusCode != 200) {
-						showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? obj.error : error));
-						win.webContents.send('synchronizeFileResult:Error', 'error')
-					}
-				}
-			);
-		} catch (error) {
-			showMessageBox('error', 'Error', 'Storage:' + error);
-			win.webContents.send('synchronizeFileResult:Error', 'error')
-		}
-	})
+		})
+	} else {
+		pushFile(path, version, index, "false");
+	}
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ipcMain.on('downloadFile', async (event, filename) => {
-	storage.get('path', async function (error, data) {
-		try {
-			if (error) throw error;
-			let queryString = { "filename": filename };
-			data.path += (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') + filename;
-			request(`${configuration.downloadFileURL}`,
-				{
-					qs: queryString
-				}, async function (error, response, body) {
-					try {
-						if (error || response.statusCode != 200) {
-							win.webContents.send('downloadFileResult:Error', 'error');
-							showMessageBox('error', 'Error', (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
-						} else {
-							fs.createWriteStream(data.path).write(body);
-							//if file successfully arrived update the local version by requesting file info for the file!!
-							let serverFile = await getServerFiles(filename).catch((error) => { throw new Error('Error getting server file.' + error) });
-							let serverFileObj = JSON.parse(serverFile.body).file;
-							storage.set(filename, { filename: filename, version: serverFileObj.version }, function (error) {
-								try {
-									if (error) throw error;
-									win.webContents.send('downloadFileResult', filename);
-								} catch (error) {
-									win.webContents.send('downloadFileResult:Error', 'error');
-									showMessageBox('error', 'Error', '' + error);
-								}
-							});
-						}
-					} catch (error) {
-						win.webContents.send('downloadFileResult:Error', 'error');
-						showMessageBox('error', 'Error', '' + error);
-					}
-				});
-		} catch (error) {
-			win.webContents.send('downloadFileResult:Error', 'error');
-			showMessageBox('error', 'Error', '' + error);
+function getDiff(path, version) {
+	let stream = fs.createReadStream(path)
+	let formData = {
+		//API request needs version and file 
+		version: version,
+		file: stream,
+	}
+	request.post(config.getDiffURL,
+		{
+			formData: formData
+		},
+		function (error, response, body) {
+			try {
+				stream.close();
+				if (!error && response.statusCode == 200) {
+					let obj = JSON.parse(body);
+					//boot the new window and show the difference when it's ready
+					conflictsBoot();
+					conflictsWin.once('ready-to-show', () => {
+						conflictsWin.webContents.send('diffResult', obj.diff)
+					})
+				}
+				if (error || response.statusCode != 200) {
+					showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+					win.webContents.send('synchronizeFileResult:Error', 'error')
+				}
+			} catch (error) {
+				showMessageBox('error', 'Error', 'synchronizeFile():' + error);
+				win.webContents.send('synchronizeFileResult:Error', 'error')
+			}
 		}
-	})
-
+	)
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function pushFile(path, version, index, force) {
+	let stream = fs.createReadStream(path);
+	let formData = {
+		version: version,
+		file: stream,
+		force: force
+	}
+	request.post(config.syncFileURL,
+		{
+			formData: formData
+		},
+		function (error, response, body) {
+			try {
+				stream.close();
+				if (!error && response.statusCode == 200) {
+					let obj = JSON.parse(body);
+					obj.theID = path;
+					obj.index = index;
+					obj.isSync = File.SAME_VERSION;
+					obj.file.date = (obj.file.date).replace(/T/, ' ').replace(/\..+/, '')
+					//on successfull response we update our version of local file and show success message on screen
+					storage.set(obj.file.filename, { filename: obj.file.filename, version: obj.file.version }, function (error) {
+						try {
+							if (error) throw error;
+							//also update the array of objects to show that it is sync!!
+							totalFiles[index].setIsSync(File.SAME_VERSION);
+							totalFiles[index].setVersion(obj.file.version);
+							win.webContents.send('synchronizeFileResult', JSON.stringify(obj))
+						} catch (error) {
+							showMessageBox('error', 'Error', 'Storage:' + error);
+							win.webContents.send('synchronizeFileResult:Error', 'error')
+						}
+					});
+				}
+				if (error || response.statusCode != 200) {
+					showMessageBox('error', 'Error', 'synchronizeFile():' + (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+					win.webContents.send('synchronizeFileResult:Error', 'error')
+				}
+			} catch (error) {
+				showMessageBox('error', 'Error', 'synchronizeFile():' + error);
+				win.webContents.send('synchronizeFileResult:Error', 'error')
+			}
+		}
+	)
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function downloadFile(filename) {
+	let queryString = {
+		"filename": filename
+	};
+	let path = watchedPath + (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') + filename;
+	request(config.downloadFileURL,
+		{
+			qs: queryString
+		}, async function (error, response, body) {
+			try {
+				if (error || response.statusCode != 200) {
+					win.webContents.send('downloadFileResult:Error', 'error');
+					showMessageBox('error', 'Error', (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+				} else {
+					let stream = fs.createWriteStream(path);
+					stream.write(body);
+					stream.close();
+					//if file successfully arrived update the local version by requesting file info for the file!!
+					let serverFile = await getServerFiles(filename).catch((error) => { throw new Error('Error getting server file.' + error) });
+					let serverFileObj = JSON.parse(serverFile.body).file;
+					storage.set(filename, { filename: filename, version: serverFileObj.version }, function (error) {
+						try {
+							if (error) throw error;
+							win.webContents.send('downloadFileResult', filename);
+						} catch (error) {
+							win.webContents.send('downloadFileResult:Error', 'error');
+							showMessageBox('error', 'Error', '' + error);
+						}
+					});
+				}
+			} catch (error) {
+				win.webContents.send('downloadFileResult:Error', 'error');
+				showMessageBox('error', 'Error', '' + error);
+			}
+		}
+	);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ipcMain.on('downloadFile', async (event, filename) => {
+	downloadFile(filename)
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('deleteFile', async (event, index) => {
@@ -360,24 +499,26 @@ ipcMain.on('deleteFile', async (event, index) => {
 
 	dialog.showMessageBox(win, {
 		type: 'warning',
-		buttons: isSync === 0 ? ['Delete the local file', 'Oops! Don\'t do it'] :
-			isSync === 2 ? ['Delete the server file', 'Oops! Don\'t do it'] :
-				['Delete the server file', 'Delete the local file', 'Delete both', 'Oops! Don\'t do it'],
+		//bug fix: when user clicks the red X should direct to cancel 
+		cancelId: isSync === File.LOCAL_ONLY ? 1 : isSync === File.SERVER_ONLY ? 1 : 3,
+		buttons: isSync === File.LOCAL_ONLY ? ['Delete the local file', 'Oops! Don\'t do it!'] :
+			isSync === File.SERVER_ONLY ? ['Delete the server file', 'Oops! Don\'t do it!'] :
+				['Delete the server file', 'Delete the local file', 'Delete both', 'Oops! Don\'t do it!'],
 		title: 'Delete',
 		message:
-			`Are you sure you want to delete ${filename} ${isSync === 0 ? `from your local folder?` :
-				(isSync === 2) ? `from the server?` :
+			`Are you sure you want to delete ${filename} ${isSync === File.LOCAL_ONLY ? `from your local folder?` :
+				(isSync === File.SERVER_ONLY) ? `from the server?` :
 					`from your local folder and the server?`}`
 	}, resp => {
 		//the first option is always delete // for isSync 1 and 3 we have 1 or more 2 buttons
-		if ((resp === 0) || ((isSync === 1 || isSync === 3) && (resp === 1 || resp === 2))) {// User selected 'Yes'
+		if ((resp === 0) || ((isSync === File.SAME_VERSION || isSync === File.DIFFERENT_VERSION) && (resp === 1 || resp === 2))) {// User selected 'Yes'
 			deleteFile(filename, isSync, version, resp).then(() => {
 				//correctly deleted everything
 				win.webContents.send('deleteFileResult', filename);
 			}).catch(error => {//error message is thrown but we have to close the loader
 				win.webContents.send('deleteFileResult:Error', '');
 			})
-		} else if (resp == 1) {//user selected 'No'
+		} else {//user selected 'No'
 			win.webContents.send('deleteFileResult:Error', '');
 		}
 	});
@@ -385,16 +526,16 @@ ipcMain.on('deleteFile', async (event, index) => {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function deleteFile(filename, isSync, version, resp) {
 	try {
-		//isSync === 0 delete from local folder. Only response that can be given
-		if (isSync === 0) {
+		//isSync === LOCAL_ONLY delete from local folder. Only response that can be given
+		if (isSync === File.LOCAL_ONLY) {
 			await deleteLocalFile(filename)
 		}
-		//isSync === 2 delete from server. Only response that can be given
-		else if (isSync === 2) {
+		//isSync === SERVER_ONLY delete from server. Only response that can be given
+		else if (isSync === File.SERVER_ONLY) {
 			await deleteServerFile(filename, version)
 		}
-		//isSync === 1 or 3 depends on response
-		else if (isSync === 1 || isSync === 3) {
+		//isSync === SAME_VERSION or DIFFERENT_VERSION depends on response
+		else if (isSync === File.SAME_VERSION || isSync === File.DIFFERENT_VERSION) {
 			if (resp === 0) {
 				await deleteServerFile(filename, version)
 			} else if (resp === 1) {
@@ -417,7 +558,7 @@ async function deleteServerFile(filename, version) {
 			version: version,
 			delete: 'true'
 		}
-		post(`${configuration.syncFileURL}`,
+		post(config.syncFileURL,
 			{
 				formData: formData
 			}).then((response) => {

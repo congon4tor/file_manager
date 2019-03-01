@@ -27,8 +27,7 @@ var fileSchema = mongoose.Schema({
     //hash of the file in the current version
     hash: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     //Date the last version was uploaded
     date: {

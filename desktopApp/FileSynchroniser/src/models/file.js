@@ -12,6 +12,7 @@ var File = function (filename, theID, isSync, isDir, size, lastModified, creatio
     this.lastModified = lastModified;
     this.creationTime = creationTime;
     this.version = version;
+    this.differentContent = false;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 File.prototype.getIndex = function () {
@@ -49,6 +50,10 @@ File.prototype.getCreationTime = function () {
 File.prototype.getVersion = function () {
     return this.version;
 };
+
+File.prototype.getDifferentContent = function () {
+    return this.differentContent;
+};
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 File.prototype.setIndex = function (index) {
     this.index = index;
@@ -85,6 +90,15 @@ File.prototype.setCreationTime = function (creationTime) {
 File.prototype.setVersion = function (version) {
     this.version = version;
 };
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-module.exports = File;
+File.prototype.setDifferentContent = function (differentContent) {
+    this.differentContent = differentContent;
+};
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+module.exports = {
+    File,
+    LOCAL_ONLY: 0,
+    SAME_VERSION: 1,
+    SERVER_ONLY: 2,
+    DIFFERENT_VERSION: 3
+};
