@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
         readFiles();
         //readFilesFromServer();
-        String url = "http://10.0.2.2:3000/file/getInfo";
+        String url = "http://18.130.64.155/file/getInfo";
         serverNames = new ArrayList<>();
 
 
@@ -216,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
     public String getServerFileVersion(String filename) {
 
 
-        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
+        String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
         FileWriter writer = null;
         okhttp3.Request request = new okhttp3.Request.Builder()     //build the request to the server to get information of a file in json format
                 .url(url)
@@ -382,7 +382,7 @@ public class MainActivity extends AppCompatActivity {
     public String getServerFileHash(String filename) {
 
 
-        String url = "http://10.0.2.2:3000/file/getInfo?filename=" + filename;
+        String url = "http://18.130.64.155/file/getInfo?filename=" + filename;
         FileWriter writer = null;
         okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(url)
@@ -448,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
     //sends a file to the server
     public String uploadFile(String filename, String version) {
 
-        String url = "http://10.0.2.2:3000/file/push";
+        String url = "http://18.130.64.155/file/push";
 
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory of the file you want to send to server
         File uploadFile = new File(path, filename);     //get the object of the file you want to upload in that directory
@@ -484,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
 
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";    //get the external directory where the file will be saved
         File downloadFile = new File(path, filename);    //get the file object you will save the contents in
-        String url = "http://10.0.2.2:3000/file/getFile?filename=" + filename;
+        String url = "http://18.130.64.155/file/getFile?filename=" + filename;
         FileWriter writer = null;
 
         //build request to get the file from the server
@@ -544,7 +544,7 @@ public class MainActivity extends AppCompatActivity {
     public void logout(){
 
 
-        String url = "http://10.0.2.2:3000/user/logout";
+        String url = "http://18.130.64.155/user/logout";
 
         //build request to get the file from the server
         okhttp3.Request request = new okhttp3.Request.Builder()
@@ -596,6 +596,7 @@ public class MainActivity extends AppCompatActivity {
             final ImageButton downloadButton = (ImageButton) convertView.findViewById(R.id.downloadButton);
             final ImageButton uploadButton = (ImageButton) convertView.findViewById(R.id.uploadButton);
             final ImageButton deleteButton = (ImageButton) convertView.findViewById(R.id.deleteButton);
+            final ImageButton conflictButton = (ImageButton) convertView.findViewById(R.id.conflictButton);
 
             fileView.setText(statusList.get(position).name);           //set the name of the file to appear
 
@@ -689,10 +690,10 @@ public class MainActivity extends AppCompatActivity {
                 if (Integer.parseInt(getLocalFileVersion(filename)) != Integer.parseInt(getServerFileVersion(filename))) {  //check if the version of the local file is not the same as the correspoding of the server
 
                     notUpdated.setVisibility(View.VISIBLE);
-                    synButton.setVisibility(View.VISIBLE);
+                    conflictButton.setVisibility(View.VISIBLE);
 
                     //action to be done when you hit synchronise
-                    synButton.setOnClickListener(new View.OnClickListener() {
+                    conflictButton.setOnClickListener(new View.OnClickListener() {
                         public void onClick(final View v) {
                             String filename = (String) fileView.getText();     //get the filename
                             ConflictDialog dialog = new ConflictDialog();     //create the dialog with the three conflict options

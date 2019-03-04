@@ -81,7 +81,7 @@ public class RegisterForm extends AppCompatActivity {
                if (password.equals(confirmPassword)) {         //check weather password field equals confirm password field
 
                   //execute the register request
-                   String url = "http://10.0.2.2:3000/user/signup";
+                   String url = "http://18.130.64.155/user/signup";
 
                    RequestBody requestBody = new MultipartBody.Builder()
                            .setType(MultipartBody.FORM)

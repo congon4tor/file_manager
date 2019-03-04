@@ -77,7 +77,7 @@ public class LogInForm extends AppCompatActivity {
         savedPassword = getSharedPreferences("password",MODE_PRIVATE);  //get logged password
 
         if(savedState.getBoolean("logged",false)){    //check if user is logged in
-            String url = "http://10.0.2.2:3000/user/login";
+            String url = "http://18.130.64.155/user/login";
             OkHttpClient okHttpClient = new OkHttpClient.Builder()    //make request to get the active session cookie
                     .cookieJar(cookieJar)
                     .build();
@@ -130,7 +130,7 @@ public class LogInForm extends AppCompatActivity {
 
 
 
-                String url = "http://10.0.2.2:3000/user/login";
+                String url = "http://18.130.64.155/user/login";
 
 
                //execute login request

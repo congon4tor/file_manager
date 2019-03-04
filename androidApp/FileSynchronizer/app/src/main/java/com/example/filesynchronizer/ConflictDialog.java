@@ -36,7 +36,7 @@ public class ConflictDialog extends DialogFragment {
                                 return;
                             }
 
-                            int currentVersion = Integer.parseInt(((MainActivity)getActivity()).getLocalFileVersion(filename)) + 2;     //calculate the new version of the file
+                            int currentVersion = Integer.parseInt(((MainActivity)getActivity()).getServerFileVersion(filename)) + 2;     //calculate the new version of the file
 
 
                             ((MainActivity)getActivity()).updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
@@ -68,7 +68,7 @@ public class ConflictDialog extends DialogFragment {
 
     public String forceUpload(String filename, String version) {
 
-        String url = "http://10.0.2.2:3000/file/push";
+        String url = "http://18.130.64.155/file/push";
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .cookieJar(LogInForm.cookieJar)
                 .build();
@@ -103,7 +103,7 @@ public class ConflictDialog extends DialogFragment {
     }
 
     public void getDiff(String filename, String version){
-        String url = "http://10.0.2.2:3000/file/getDiff";
+        String url = "http://18.130.64.155/file/getDiff";
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .cookieJar(LogInForm.cookieJar)
                 .build();
