@@ -17,10 +17,10 @@ public class DeleteLocalDialog extends DialogFragment {
         builder.setMessage(R.string.localDelete)
                 .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        String filename=getArguments().getString("filename");
-                        String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
+                        String filename=getArguments().getString("filename");    //get filename from main activity
+                        String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";      //get the files directory
                         File file= new File(path,filename);
-                        file.delete();
+                        file.delete();       //delete the file
                         //((MainActivity)getActivity()).deleteLocalFileVersion(filename);
 
                         ((MainActivity)getActivity()).displayFiles();

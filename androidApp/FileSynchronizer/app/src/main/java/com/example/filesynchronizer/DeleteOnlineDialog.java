@@ -24,12 +24,12 @@ public class DeleteOnlineDialog extends DialogFragment {
         builder.setMessage(R.string.onlineDelete)
                 .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        String filename=getArguments().getString("filename");
+                        String filename=getArguments().getString("filename");    //get filename from main activity
                         String url = "http://18.130.64.155/file/push";
                         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                                 .cookieJar(LogInForm.cookieJar)
                                 .build();
-                        RequestBody requestBody = new MultipartBody.Builder()
+                        RequestBody requestBody = new MultipartBody.Builder()        //create request to delete the file from server
                                 .setType(MultipartBody.FORM)
                                 .addFormDataPart("filename",filename)
                                 .addFormDataPart("version",((MainActivity)getActivity()).getServerFileVersion(filename))

@@ -30,7 +30,7 @@ public class ConflictDialog extends DialogFragment {
                     public void onClick(DialogInterface dialog, int which) {
                         String filename=getArguments().getString("filename");
 
-                        if (which==0){
+                        if (which==0){   //force upload
                             if (forceUpload(filename,((MainActivity)getActivity()).getLocalFileVersion(filename)).contains("\"success\":false")){
                                 Toast.makeText(((MainActivity)getActivity()).getApplicationContext(), "Error updating the file", Toast.LENGTH_LONG).show();
                                 return;
@@ -46,7 +46,7 @@ public class ConflictDialog extends DialogFragment {
 
 
                         }
-                        if (which==1){
+                        if (which==1){     //download last version
 
                             if (((MainActivity)getActivity()).downloadFile(filename).equals("error"))        //download the new version of the file
                                 return;
@@ -57,7 +57,7 @@ public class ConflictDialog extends DialogFragment {
 
                         }
 
-                        if (which==2){
+                        if (which==2){     //get diff file
                             getDiff(filename,((MainActivity)getActivity()).getLocalFileVersion(filename));
 
                         }

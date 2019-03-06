@@ -48,8 +48,8 @@ public class DeleteBothDialog extends DialogFragment {
                         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                                 .cookieJar(LogInForm.cookieJar)
                                 .build();
-                        for (int i=0;i<mSelectedItems.size();i++){
-                            if (mSelectedItems.get(i).toString().equals("0")){
+                        for (int i=0;i<mSelectedItems.size();i++){    //traverse the list with the options
+                            if (mSelectedItems.get(i).toString().equals("0")){      //if delete local is selected
                                 String filename=getArguments().getString("filename");
                                 String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/WorkingDirectory";
                                 File file= new File(path,filename);
@@ -58,7 +58,7 @@ public class DeleteBothDialog extends DialogFragment {
 
                             }
 
-                            if (mSelectedItems.get(i).toString().equals("1")){
+                            if (mSelectedItems.get(i).toString().equals("1")){       //if delete online is selected
                                 String filename=getArguments().getString("filename");
                                 String url = "http://18.130.64.155/file/push";
                                 RequestBody requestBody = new MultipartBody.Builder()
