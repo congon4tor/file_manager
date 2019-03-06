@@ -187,5 +187,10 @@ public class LogInForm extends AppCompatActivity {
 
     }
 
+    public void updateInfoOnLogin(){
+
+    }
+
+
 
 }

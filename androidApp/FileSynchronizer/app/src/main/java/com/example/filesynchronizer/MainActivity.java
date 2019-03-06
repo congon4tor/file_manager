@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
     public void readFiles() {
         fileNames = new ArrayList<>();    //list with the file's name
         String path = Environment.getExternalStorageDirectory().toString();    //get the path to the phone storage
@@ -267,10 +268,11 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (IOException e) {
             e.printStackTrace();
-            return "1";
+            addLocalFileInfo(filename,getServerFileVersion(filename));
+            return getServerFileVersion(filename);
         }
 
-        return "1";
+        return getServerFileVersion(filename);
 
 
     }
