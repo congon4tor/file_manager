@@ -38,7 +38,6 @@ function boot() {
 		frame: true,
 		resizable: true,
 		show: false,
-		icon: `${__dirname}/src/img/icon.png`,
 		webPreferences: {
 			//for the warning it gives on console. Security issue (?)
 			nodeIntegration: true
@@ -107,7 +106,6 @@ function conflictsBoot() {
 		frame: true,
 		resizable: true,
 		show: false,
-		icon: `${__dirname}/src/img/diff.png`,
 		webPreferences: {
 			//for the warning it gives on console. Security issue (?)
 			nodeIntegration: true
