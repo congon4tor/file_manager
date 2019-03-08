@@ -50,8 +50,9 @@ function boot() {
 	})
 	win.on('closed', () => {
 		win = null
+		app.exit();
 	})
-	win.webContents.openDevTools({ mode: 'detach' })
+	// win.webContents.openDevTools({ mode: 'detach' })
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var menu = Menu.buildFromTemplate([
