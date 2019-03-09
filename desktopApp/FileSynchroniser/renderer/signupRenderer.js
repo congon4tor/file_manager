@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-var form = document.getElementById('signupForm');
+var form = document.getElementById('inputForm');
 var password = document.getElementById("password")
     , confirm_password = document.getElementById("confirm_password");
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

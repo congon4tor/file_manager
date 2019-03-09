@@ -176,11 +176,11 @@ Html, body {
   }
 }
 
-/**********************/
+/***********************************/
 
-/* for the login form */
+/* for the login and sign-up forms */
 
-/**********************/
+/***********************************/
 
 .grandParentContaniner {
   display: table;
@@ -193,7 +193,7 @@ Html, body {
   vertical-align: middle;
 }
 
-.parentContainer #loginForm {
+.parentContainer #inputForm {
   background: #f9f9f9;
   border: 1px solid #353535;
   padding: 30px;
@@ -206,7 +206,7 @@ Html, body {
   margin: auto;
 }
 
-.login-btn {
+.main-btn {
   width: 90px !important;
 }
 

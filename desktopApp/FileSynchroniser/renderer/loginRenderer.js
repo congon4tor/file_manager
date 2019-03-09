@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-var form = document.getElementById('loginForm');
+var form = document.getElementById('inputForm');
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 form.addEventListener('submit', (evt) => {
     evt.preventDefault();
