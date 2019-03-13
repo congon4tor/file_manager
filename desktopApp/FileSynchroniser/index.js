@@ -103,7 +103,7 @@ function conflictsBoot() {
 		width: 800,
 		height: 400,
 		useContentSize: true,
-		frame: true,
+		frame: false,
 		resizable: true,
 		show: false,
 		webPreferences: {
@@ -169,7 +169,7 @@ function refreshScreen() {
 ipcMain.on('login', async (event, username, password) => {
 	try {
 		watchedPath=null;
-		let result = await login(username, password).catch((error) => { console.log('bbbbbbbb'); throw new Error('' + error) });
+		let result = await login(username, password).catch((error) => { throw new Error('' + error) });
 		win.loadURL(`file://${__dirname}/src/html/index.html`)
 		win.webContents.on('did-finish-load', () => {
 			//show the menu when loging in 
