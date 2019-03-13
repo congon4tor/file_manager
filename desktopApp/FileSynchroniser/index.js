@@ -282,7 +282,7 @@ function deleteAccount(username, password) {
 				} else {
 					reject(JSON.parse(response.body).error)
 				}
-			}).catch((error) => { throw new Error('' + error) });
+			}).catch((error) => { reject('' + error) });
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -301,7 +301,7 @@ async function signup(username, password) {
 				} else {
 					reject(JSON.parse(response.body).error)
 				}
-			}).catch((error) => { throw new Error('' + error) });
+			}).catch((error) => { reject('' + error)  });
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
