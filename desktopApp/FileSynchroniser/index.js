@@ -69,7 +69,22 @@ var menu = Menu.buildFromTemplate([
 				label: 'Refresh',
 				accelerator: 'CmdOrCtrl+R',
 				click() {
+					win.webContents.send('refreshLoader', '')
 					refreshScreen()
+				}
+			},
+			{
+				label: 'Delete account',
+				accelerator: 'CmdOrCtrl+D',
+				click() {
+					dialog.showMessageBox(win, {
+						type: 'question',
+						buttons: ['Yes', 'No'],
+						title: 'Hey',
+						message: 'Are you really sure you want to delete your account?'
+					}, resp => {
+						let result = deleteAccount().catch((error) => { win.webContents.send('unauthorized', 'true') });
+					})
 				}
 			},
 			{ type: 'separator' },
@@ -168,10 +183,12 @@ function refreshScreen() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('login', async (event, username, password) => {
 	try {
-		watchedPath=null;
+		watchedPath = null;
 		let result = await login(username, password).catch((error) => { throw new Error('' + error) });
 		win.loadURL(`file://${__dirname}/src/html/index.html`)
 		win.webContents.on('did-finish-load', () => {
+			//start showing the loader 
+			win.webContents.send('loginLoader', '')
 			//show the menu when loging in 
 			Menu.setApplicationMenu(menu);
 			refreshScreen()
@@ -186,13 +203,19 @@ ipcMain.on('logout', async (event) => {
 	try {
 		showMessageBox('warning', 'Warning', 'All pending local changes will not be synchronised');
 		let result = await logout().catch((error) => { throw new Error('' + error) });
+		jar = request.jar();
 		win.loadURL(`file://${__dirname}/src/html/login.html`)
 		win.webContents.on('did-finish-load', () => {
 			Menu.setApplicationMenu(null);
 		})
 	}
 	catch (error) {
-		win.webContents.send('login:Error', '' + error)
+		jar = request.jar();
+		win.loadURL(`file://${__dirname}/src/html/login.html`)
+		win.webContents.on('did-finish-load', () => {
+			Menu.setApplicationMenu(null);
+		})
+
 	}
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,7 +279,7 @@ function clearLocalStorage() {
 		if (error) throw error;
 		for (let file in totalFiles) {
 			storage.remove(totalFiles[file].filename, function (error) {
-				console.log('removed'+totalFiles[file].filename)
+				console.log('removed' + totalFiles[file].filename)
 				if (error) throw error;
 			});
 		}
@@ -277,7 +300,11 @@ function deleteAccount(username, password) {
 					//refreshes the jar to remove all previous cookies
 					jar = request.jar();
 					// hide menu
-					Menu.setApplicationMenu(null);
+					win.loadURL(`file://${__dirname}/src/html/login.html`)
+					win.webContents.on('did-finish-load', () => {
+						Menu.setApplicationMenu(null);
+						win.webContents.send('deleteAccount', '')
+					})
 					resolve()
 				} else {
 					reject(JSON.parse(response.body).error)
@@ -301,7 +328,7 @@ async function signup(username, password) {
 				} else {
 					reject(JSON.parse(response.body).error)
 				}
-			}).catch((error) => { reject('' + error)  });
+			}).catch((error) => { reject('' + error) });
 	});
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -386,6 +413,14 @@ async function getServerFiles(filename) {
 	} else {
 		let queryString = { "filename": filename };
 		serverFiles = await get({ url: config.getServerFilesURL, jar: jar, qs: queryString });
+	}
+	// added missing error handling for getting server files! checking for unauthorized or other errors while retrieving list 
+	if (serverFiles.statusCode != 200) {
+		if (serverFiles.statusCode == 401) {
+			win.webContents.send('unauthorized', 'true')
+		} else {
+			throw new Error(serverFiles.statusCode + JSON.parse(serverFiles.body).error)
+		}
 	}
 	return serverFiles;
 }

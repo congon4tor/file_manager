@@ -21,18 +21,24 @@ form.addEventListener('submit', (evt) => {
 })
 
 ipcRenderer.on('signup:Error', (event, result) => {
-    alert(result)
+    alert(result,'alert-danger')
 })
 
 ipcRenderer.on('signup', (event, result) => {
-    alert('Successfully signed up!')
+    console.log('received');
+    alert('Successfully signed up! You can now login', 'alert-success')
 })
 
-function alert(message) {
-    if (message != "")
+function alert(message,styleClass) {
+    if (message != ""){
         document.getElementById("alert-message").innerHTML = message;
+        document.getElementById("alert-div").classList.add(styleClass);
+    }
     $(".alert-bottom").show();
     setTimeout(function () {
         $(".alert-bottom").hide();
+        if (styleClass==='alert-success'){
+            window.location.href = "./login.html";
+        }
     }, 6000);
 }

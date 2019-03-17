@@ -9,14 +9,21 @@ form.addEventListener('submit', (evt) => {
 })
 
 ipcRenderer.on('login:Error', (event, result) => {
-    alert(result)
+    alert(result, 'alert-danger')
 })
 
-function alert(message) {
-    if (message != "")
+ipcRenderer.on('deleteAccount', (event, result) => {
+    alert('Successfully deleted your account', 'alert-success')
+})
+
+function alert(message, styleClass) {
+    if (message != ""){
         document.getElementById("alert-message").innerHTML = message;
+        document.getElementById("alert-div").classList.add(styleClass);
+    }
     $(".alert-bottom").show();
     setTimeout(function () {
         $(".alert-bottom").hide();
     }, 6000);
 }
+
