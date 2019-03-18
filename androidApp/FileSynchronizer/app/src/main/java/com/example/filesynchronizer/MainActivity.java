@@ -13,10 +13,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -44,6 +46,7 @@ import okhttp3.RequestBody;
 
 
 
+
 public class MainActivity extends AppCompatActivity {
 
     ListView fileList;
@@ -59,7 +62,53 @@ public class MainActivity extends AppCompatActivity {
             .build();
 
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.logout:
+                savedState = getSharedPreferences("login",MODE_PRIVATE);
+                savedUsername = getSharedPreferences("username",MODE_PRIVATE);
+                savedPassword = getSharedPreferences("password",MODE_PRIVATE);
+                savedState.edit().putBoolean("logged",false).apply();      //set logged status as false
+                savedUsername.edit().putString("username","").apply();     //delete logged username
+                savedPassword.edit().putString("password","").apply();     //delete logged password
+
+                logout();
+                File file = new File(getFilesDir(), "fileinfo.txt");
+                file.delete();
+
+                Intent intent = new Intent(MainActivity.this, LogInForm.class);
+                startActivity(intent);
+                finish();
+                return true;
+            case R.id.delete:
+                savedState = getSharedPreferences("login",MODE_PRIVATE);
+                savedUsername = getSharedPreferences("username",MODE_PRIVATE);
+                savedPassword = getSharedPreferences("password",MODE_PRIVATE);
+                savedState.edit().putBoolean("logged",false).apply();      //set logged status as false
+                savedUsername.edit().putString("username","").apply();     //delete logged username
+                savedPassword.edit().putString("password","").apply();     //delete logged password
+
+                deleteUser();
+                File file1 = new File(getFilesDir(), "fileinfo.txt");
+                file1.delete();
+
+                Intent intent1 = new Intent(MainActivity.this, LogInForm.class);
+                startActivity(intent1);
+                finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,28 +207,6 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        Button logoutButton=(Button) findViewById(R.id.logoutButton);
-
-        logoutButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(final View v) {
-                savedState = getSharedPreferences("login",MODE_PRIVATE);
-                savedUsername = getSharedPreferences("username",MODE_PRIVATE);
-                savedPassword = getSharedPreferences("password",MODE_PRIVATE);
-                savedState.edit().putBoolean("logged",false).apply();      //set logged status as false
-                savedUsername.edit().putString("username","").apply();     //delete logged username
-                savedPassword.edit().putString("password","").apply();     //delete logged password
-
-                logout();
-                File file = new File(getFilesDir(), "fileinfo.txt");
-                file.delete();
-
-                Intent intent = new Intent(MainActivity.this, LogInForm.class);
-                startActivity(intent);
-                finish();
-
-            }
-
-        });
 
     }
 
@@ -547,6 +574,25 @@ public class MainActivity extends AppCompatActivity {
 
 
         String url = "http://18.130.64.155/user/logout";
+
+        //build request to get the file from the server
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .build();
+
+        okhttp3.Response response = null;
+        try {
+            response = okHttpClient.newCall(request).execute();   //get the response
+            String contents = response.body().string();       //save the contents of the file into a string
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void deleteUser(){
+        String url = "http://18.130.64.155/user/delete";
 
         //build request to get the file from the server
         okhttp3.Request request = new okhttp3.Request.Builder()
