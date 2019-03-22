@@ -651,38 +651,21 @@ function downloadFile(filename) {
 		{
 			qs: queryString,
 			jar: jar
-		}, async function (error, response, body) {
-			try {
-				if (error || response.statusCode != 200) {
-					win.webContents.send('downloadFileResult:Error', 'error');
-					showMessageBox('error', 'Error', (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
-				} else {
-					let stream = fs.createWriteStream(path);
-					stream.write(body);
-					stream.close();
-					//if file successfully arrived update the local version by requesting file info for the file!!
-					let serverFile = await getServerFiles(filename).catch((error) => { throw new Error('Error getting server file.' + error) });
-					let serverFileObj = JSON.parse(serverFile.body).file;
-					storage.set(filename, { filename: filename, version: serverFileObj.version }, function (error) {
-						try {
-							if (error) throw error;
-							win.webContents.send('downloadFileResult', filename);
-						} catch (error) {
-							win.webContents.send('downloadFileResult:Error', 'error');
-							showMessageBox('error', 'Error', '' + error);
-						}
-					});
-				}
-			} catch (error) {
-				win.webContents.send('downloadFileResult:Error', 'error');
-				showMessageBox('error', 'Error', '' + error);
-			}
 		}
-	);
+	).on('response', function (response) {
+		if (response.statusCode != 200) {
+			//win.webContents.send('downloadFileResult:Error', 'error');
+			//showMessageBox('error', 'Error', (!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+			throw new Error((!error ? response.statusCode : '') + ': ' + (!error ? JSON.parse(body).error : error));
+		}
+	}).on('error', function (err) {
+		win.webContents.send('downloadFileResult:Error', 'error');
+		showMessageBox('error', 'Error', '' + err);
+	}).pipe(fs.createWriteStream(path));
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('downloadFile', async (event, filename) => {
-	downloadFile(filename)
+	try {  downloadFile(filename) } catch (error) { console.log('----------------------1'); }
 })
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ipcMain.on('deleteFile', async (event, index) => {
