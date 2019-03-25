@@ -88,6 +88,7 @@ function downloadFile(filename) {
 }
 ipcRenderer.on('downloadFileResult:Error', (event, result) => {
     hideLoader()
+    alert('<i class="fas fa-exclamation-triangle"></i> Oops! Error '+result, '', 'alert-danger')
 })
 ipcRenderer.on('downloadFileResult', (event, result) => {
     hideLoader()
@@ -106,6 +107,11 @@ ipcRenderer.on('refreshLoader', (event, result) => {
 
 ipcRenderer.on('loginLoader', (event, result) => {
     showLoader()
+})
+
+ipcRenderer.on('Error', (event, result) => {
+    hideLoader()
+    alert('<i class="fas fa-exclamation-triangle"></i> Oops!'+result, '', 'alert-danger')
 })
 
 function synchronizeFile(index, filename) {
@@ -138,6 +144,7 @@ function logout() {
 }
 
 function alert(message, action, styleClass) {
+    document.getElementById("alert-div").classList.add(styleClass);
     if (styleClass === 'alert-success') {
         if (message != "") {
             document.getElementById("alert-message").innerHTML = "Success! File " + message + " just " + action + "!";
@@ -145,7 +152,6 @@ function alert(message, action, styleClass) {
     }else{
         document.getElementById("alert-message").innerHTML = "" + message;
     }
-    document.getElementById("alert-div").classList.add(styleClass);
     $(".alert-bottom").show();
     setTimeout(function () {
         $(".alert-bottom").hide();
@@ -168,4 +174,7 @@ ipcRenderer.on('unauthorized', (event, result) => {
     alert('<i class="fas fa-exclamation-triangle"></i> Oops! Seems you\'re unauthorized. Please try logging in again', '', 'alert-danger')
 })
 
-
+ipcRenderer.on('files:Error', (event, data) => {
+    alert('<i class="fas fa-exclamation-triangle"></i>'+data, '', 'alert-danger')
+    hideLoader()
+})
