@@ -667,9 +667,10 @@ function downloadFile(filename) {
 			win.webContents.send('downloadFileResult:Error', response.statusCode);
 		} else {
 			r.pipe(fs.createWriteStream(path));
-			win.webContents.send('downloadFileResult', filename);
 		}
-	})
+	}).on('end', () => {
+		win.webContents.send('downloadFileResult', filename);
+	});
 }
 
 process.on('uncaughtException', function (err) {
