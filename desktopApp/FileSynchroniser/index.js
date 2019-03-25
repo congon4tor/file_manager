@@ -657,6 +657,7 @@ function downloadFile(filename) {
 		"filename": filename
 	};
 	let path = watchedPath + (process.platform == 'win32' || process.platform == 'win64' ? '\\' : '/') + filename;
+	var success = false;
 	var r = request(config.downloadFileURL,
 		{
 			qs: queryString,
@@ -664,12 +665,16 @@ function downloadFile(filename) {
 		}
 	).on('response', function (response) {
 		if (response.statusCode != 200) {
+			success=false;
 			win.webContents.send('downloadFileResult:Error', response.statusCode);
 		} else {
 			r.pipe(fs.createWriteStream(path));
+			success=true;
 		}
 	}).on('end', () => {
-		win.webContents.send('downloadFileResult', filename);
+		if (success) {
+			win.webContents.send('downloadFileResult', filename);
+		}
 	});
 }
 
