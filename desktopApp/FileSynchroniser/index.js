@@ -107,7 +107,8 @@ var menu = Menu.buildFromTemplate([
 				}
 			},
 			{
-				label: 'Exit',
+				label: 'Quit',
+				accelerator: 'CmdOrCtrl+Q',
 				click() {
 					app.quit()
 				}
