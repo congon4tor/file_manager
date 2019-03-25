@@ -13,6 +13,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -194,6 +195,12 @@ public class MainActivity extends AppCompatActivity {
                 serverNames.add(json.getJSONArray("files").getJSONObject(i).get("filename").toString());
 
             getLists();
+
+            if (statusList.size()==0) {
+                Toast toast=Toast.makeText(getApplicationContext(), "No files available", Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER,0,0);
+                toast.show();
+            }
             FileAdapter fileAdapter = new FileAdapter();      //create the adapter
             fileList.setAdapter(fileAdapter);
 
