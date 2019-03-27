@@ -30,6 +30,10 @@ ipcRenderer.on('files:Error', (event, data) => {
     hideLoader()
 })
 
+ipcRenderer.on('logout:Error', (event, data) => {
+    hideLoader()
+})
+
 function openFile(index) {
     $(".tooltip").tooltip("hide");
     showLoader()
