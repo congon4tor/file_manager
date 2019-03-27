@@ -1,0 +1,31 @@
+{
+  "name": "file_synchroniser",
+  "version": "1.0.0",
+  "description": "Server app for KCL Group Project. Group name: default_team.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js",
+    "start-watch": "nodemon src/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^2.0.3",
+    "cookie-parser": "^1.4.4",
+    "diff": "^4.0.1",
+    "express": "^4.16.4",
+    "express-fileupload": "^1.1.1-alpha.1",
+    "express-session": "^1.15.6",
+    "http-errors": "^1.7.1",
+    "isbinaryfile": "^4.0.0",
+    "mongoose": "^5.4.6",
+    "morgan": "^1.9.1",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.9"
+  }
+}
