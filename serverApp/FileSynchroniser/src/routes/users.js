@@ -78,8 +78,8 @@ router.post('/signup', (req, res)=>{
                         });
                     });
                 });
-            }else{ //there are no files
-                res.send({success: false, error: "Username is not available"});
+            }else{ //username not available
+                res.status(400).send({success: false, error: "Username is not available"});
             }
         });
     }else{ //If no username or password was provided error
