@@ -1,10 +1,9 @@
 const { ipcRenderer } = require('electron');
 
-let File = require('./src/models/file.js');
+let File = require('../models/file.js');
 // hide warning regarding Content Security Policy https://developer.chrome.com/extensions/contentSecurityPolicy
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //get the files from main process when user clicks load directory
 ipcRenderer.on('files', (event, files) => {
     document.getElementById('display-files').innerHTML = `${JSON.parse(files).map(fileTemplate).join("")}`;
@@ -30,7 +29,11 @@ ipcRenderer.on('files:Error', (event, data) => {
     $(".tooltip").tooltip("hide");
     hideLoader()
 })
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ipcRenderer.on('logout:Error', (event, data) => {
+    hideLoader()
+})
+
 function openFile(index) {
     $(".tooltip").tooltip("hide");
     showLoader()
@@ -39,7 +42,7 @@ function openFile(index) {
         hideLoader()
     })
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
 function fileTemplate(data) {
     let string =
         `<tr id="${data.index}">
@@ -65,7 +68,7 @@ function fileTemplate(data) {
         </tr > `;
     return string;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
 function deleteFile(filename) {
     $(".tooltip").tooltip("hide");
     showLoader()
@@ -79,9 +82,9 @@ ipcRenderer.on('deleteFileResult', (event, result) => {
     refreshScreen()
     $('[data-toggle="tooltip"]').tooltip();
     if (result != '')
-        alert(result, 'deleted')
+        alert(result, 'deleted', 'alert-success')
 })
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
 function downloadFile(filename) {
     $(".tooltip").tooltip("hide");
     showLoader()
@@ -89,18 +92,32 @@ function downloadFile(filename) {
 }
 ipcRenderer.on('downloadFileResult:Error', (event, result) => {
     hideLoader()
+    alert('<i class="fas fa-exclamation-triangle"></i> Oops! Error '+result, '', 'alert-danger')
 })
 ipcRenderer.on('downloadFileResult', (event, result) => {
     hideLoader()
     refreshScreen()
     $('[data-toggle="tooltip"]').tooltip();
-    alert(result, 'downloaded')
+    alert(result, 'downloaded', 'alert-success')
 })
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ipcRenderer.on('closedConflicts', (event, result) => {
     hideLoader()
 })
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ipcRenderer.on('refreshLoader', (event, result) => {
+    showLoader()
+})
+
+ipcRenderer.on('loginLoader', (event, result) => {
+    showLoader()
+})
+
+ipcRenderer.on('Error', (event, result) => {
+    hideLoader()
+    alert('<i class="fas fa-exclamation-triangle"></i> Oops!'+result, '', 'alert-danger')
+})
+
 function synchronizeFile(index, filename) {
     $(".tooltip").tooltip("hide");
     showLoader()
@@ -112,33 +129,56 @@ function synchronizeFile(index, filename) {
         document.getElementById(`${myObj.index}status`).innerHTML = `<i style = "color:green" class="fas fa-check"></i>`;
         document.getElementById(`${myObj.index}lastSync`).innerHTML = ``;
         hideLoader()
-        alert(myObj.file.filename, 'uploaded')
+        alert(myObj.file.filename, 'uploaded', 'alert-success')
     })
     ipcRenderer.on('synchronizeFileResult:Error', (event, result) => {
         hideLoader()
     })
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function refreshScreen() {
     $(".tooltip").tooltip("hide");
     showLoader()
     ipcRenderer.send('refreshScreen', 'refresh');
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function alert(message, action) {
-    if (message != "")
-        document.getElementById("alert-message").innerHTML = "Success! File " + message + " just " + action + "!";
+
+function logout() {
+    showLoader()
+    ipcRenderer.send('logout');
+}
+
+function alert(message, action, styleClass) {
+    document.getElementById("alert-div").classList.add(styleClass);
+    if (styleClass === 'alert-success') {
+        if (message != "") {
+            document.getElementById("alert-message").innerHTML = "Success! File " + message + " just " + action + "!";
+        }
+    }else{
+        document.getElementById("alert-message").innerHTML = "" + message;
+    }
     $(".alert-bottom").show();
     setTimeout(function () {
         $(".alert-bottom").hide();
     }, 6000);
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function showLoader() {
     document.getElementById("loader").style.display = "block";
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function hideLoader() {
     document.getElementById("loader").style.display = "none";
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ipcRenderer.on('deleteAccount:error', (event, result) => {
+    alert(result, '', 'alert-danger')
+})
+
+ipcRenderer.on('unauthorized', (event, result) => {
+    alert('<i class="fas fa-exclamation-triangle"></i> Oops! Seems you\'re unauthorized. Please try logging in again', '', 'alert-danger')
+})
+
+ipcRenderer.on('files:Error', (event, data) => {
+    alert('<i class="fas fa-exclamation-triangle"></i>'+data, '', 'alert-danger')
+    hideLoader()
+})

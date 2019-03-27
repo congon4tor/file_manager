@@ -1,109 +1,221 @@
-* { 
-    box-sizing: border-box;
-    max-width: 100%;
+Html, body {
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+* {
+  box-sizing: border-box;
+  /* max-width: 100%; */
 }
 
 .row {
-    align-content: center;
+  align-content: center;
 }
 
 /**************************/
+
 /* for the refresh button */
+
 /**************************/
 
 .btn-primary {
-    color: #fff;
-    background-color: #353535;
-    border-color: #353535;
+  color: #fff;
+  background-color: #353535;
+  border-color: #353535;
 }
 
 .btn-primary:hover {
-    color: #353535;
-    background-color: #fff;
-    border-color: #353535;
+  color: #353535;
+  background-color: #fff;
+  border-color: #353535;
 }
 
 .btn-primary::selection {
-    color: #353535;
-    background-color: #fff;
-    border-color: #353535;
+  color: #353535;
+  background-color: #fff;
+  border-color: #353535;
 }
 
 .btn-primary.focus, .btn-primary:focus {
-    box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
 }
 
-.btn-primary:not(:disabled):not(.disabled).active, 
-.btn-primary:not(:disabled):not(.disabled):active,
- .show>.btn-primary.dropdown-toggle {
-    color: #fff;
-    background-color: #000000;
-    border-color: #000000;
-    box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+.btn-primary:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle {
+  color: #fff;
+  background-color: #000000;
+  border-color: #000000;
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
 }
 
-.btn-primary:not(:disabled):not(.disabled).active:focus, 
-.btn-primary:not(:disabled):not(.disabled):active:focus,
- .show>.btn-primary.dropdown-toggle:focus {
-    box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+.btn-primary:not(:disabled):not(.disabled).active:focus, .btn-primary:not(:disabled):not(.disabled):active:focus, .show>.btn-primary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
 }
 
 .btn-primary:active {
-    color: #353535;
-    background-color: #fff;
-    border-color: #353535;
-  }
+  color: #353535;
+  background-color: #fff;
+  border-color: #353535;
+}
 
-.synchronize {
-    padding: 15px 20px;
-    line-height: 1.33;
-    border-radius: 100%;
-  }
-  
-  #syncButton {
-    position: fixed;
-    bottom: 14px;
-    right: 10px;
-  }
+.roundButton {
+  padding: 15px 20px;
+  line-height: 1.33;
+  border-radius: 100%;
+}
+
+#syncButton {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+}
 
 /**************************/
+
+/* for the logout button  */
+
+/**************************/
+
+.btn-danger {
+  color: #fff;
+  background-color: #d9534f;
+  border-color: #d9534f;
+}
+
+.btn-danger:hover {
+  color: #d9534f;
+  background-color: #fff;
+  border-color: #d9534f;
+}
+
+.btn-danger::selection {
+  color: #d9534f;
+  background-color: #fff;
+  border-color: #d9534f;
+}
+
+.btn-danger.focus, .btn-primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-danger:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle {
+  color: #fff;
+  background-color: #000000;
+  border-color: #000000;
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-danger:not(:disabled):not(.disabled).active:focus, .btn-primary:not(:disabled):not(.disabled):active:focus, .show>.btn-primary.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(35, 35, 35, 0.5);
+}
+
+.btn-danger:active {
+  color: #353535;
+  background-color: #fff;
+  border-color: #d9534f;
+}
+
+#logoutButton {
+  position: fixed;
+  bottom: 78px;
+  right: 10px;
+}
+
+/**************************/
+
 /* for the success alert  */
+
 /**************************/
 
-.alert-bottom{
-    position: fixed;
-    bottom: 5px;
-    left:2%;
+.alert-bottom {
+  position: fixed;
+  bottom: 5px;
+  left: 2%;
 }
 
-.alert{
-    display: none;
+.alert {
+  display: none;
 }
 
 /*******************/
+
 /* for the loading */
+
 /*******************/
+
 #loader {
-    display:none;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 1;
-    margin: -75px 0 0 -75px;
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #353535;
-    width: 120px;
-    height: 120px;
-    animation: spin 1s linear infinite;
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #353535;
+  width: 120px;
+  height: 120px;
+  animation: spin 1s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
   }
-  
-  @-webkit-keyframes spin {
-    0% { -webkit-transform: rotate(0deg); }
-    100% { -webkit-transform: rotate(360deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
   }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/***********************************/
+
+/* for the login and sign-up forms */
+
+/***********************************/
+
+.grandParentContaniner {
+  display: table;
+  height: 100%;
+  margin: 0 auto;
+}
+
+.parentContainer {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.parentContainer #inputForm {
+  background: #f9f9f9;
+  border: 1px solid #353535;
+  padding: 30px;
+  width: 300px;
+  border-radius: 20px;
+}
+
+.centerBlock {
+  display: table;
+  margin: auto;
+}
+
+.main-btn {
+  width: 90px !important;
+}
+
+/**********************/
+
+/* font above buttons */
+
+/**********************/
+
+.small, small {
+  font-size: 70%;
+}
