@@ -69,6 +69,7 @@ public class LogInForm extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(LogInForm.this, RegisterForm.class);
                 startActivity(intent);
+                finish();
             }
         });
 

@@ -34,7 +34,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -450,13 +449,19 @@ public class MainActivity extends AppCompatActivity {
 
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/WorkingDirectory";
         File file = new File(path, filename);
-        String contents = "";
+        //String contents = "";
+        byte contents[]= new byte[(int)file.length()];
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
-            int i = 0;
-            while ((i = fileInputStream.read()) != -1) {
-                contents += (char) i;
-            }
+
+
+            fileInputStream.read(contents);
+
+            //int i = 0;
+           // while ((i = fileInputStream.read()) != -1) {
+               // contents += (char) i;
+           // }
+
             fileInputStream.close();
 
         } catch (IOException e) {
@@ -469,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        byte[] hashInBytes = md.digest(contents.getBytes(StandardCharsets.UTF_8));
+        byte[] hashInBytes = md.digest(contents);
 
         // bytes to hex
         StringBuilder sb = new StringBuilder();
@@ -531,19 +536,22 @@ public class MainActivity extends AppCompatActivity {
         okhttp3.Response response = null;
         try {
             response = okHttpClient.newCall(request).execute();   //get the response
-            String contents = response.body().string();       //save the contents of the file into a string
+            byte[] contents = response.body().bytes();       //save the contents of the file into a string
 
             //check weather the server returns an error and display the proper error message
-            if (contents.contains("\"success\":false")) {
-                Toast.makeText(getApplicationContext(), "Error getting the file", Toast.LENGTH_LONG).show();
-                return "error";
-            }
+            //if (contents.contains("\"success\":false")) {
+              //  Toast.makeText(getApplicationContext(), "Error getting the file", Toast.LENGTH_LONG).show();
+                //return "error";
+            //}
 
             //write the contents you got into the file
-            writer = new FileWriter(downloadFile, false);
-            writer.write(contents);
-            writer.flush();
-            writer.close();
+            //writer = new FileWriter(downloadFile, false);
+            //writer.write(contents);
+            //writer.flush();
+            //writer.close();
+            FileOutputStream fileOutputStream = new FileOutputStream(downloadFile, false);       //create the file and add the filename with its version
+            fileOutputStream.write(contents);
+            fileOutputStream.close();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -566,9 +574,21 @@ public class MainActivity extends AppCompatActivity {
                 fileOutputStream.write(versionLine.getBytes());
                 fileOutputStream.close();
             } else {
-                FileOutputStream fileOutputStream = new FileOutputStream(file, true);        //append the existing file with the new filename and version
-                fileOutputStream.write(versionLine.getBytes());
-                fileOutputStream.close();
+                String contents="";
+                FileInputStream fileInputStream = new FileInputStream(file);    //open a stream to read the file
+                int i = 0;
+                while ((i = fileInputStream.read()) != -1)     //save all the contents of the file
+                    contents += (char) i;
+
+                fileInputStream.close();
+                if (contents.contains(filename))
+                     updateLocalFileVersion(filename,version);
+                else {
+
+                    FileOutputStream fileOutputStream = new FileOutputStream(file, true);        //append the existing file with the new filename and version
+                    fileOutputStream.write(versionLine.getBytes());
+                    fileOutputStream.close();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -784,11 +804,18 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }
 
+                                try {//get the response contents
+                                    JSONObject json = new JSONObject(uploadResult);        //get the json form the response
+                                   int currentVersion =Integer.parseInt(json.getJSONObject("file").get("version").toString());   //get the version field of the file
+                                    updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
+                                }  catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
 
-                                int currentVersion = Integer.parseInt(getLocalFileVersion(filename)) + 1;     //calculate the new version of the file
+                                //int currentVersion = Integer.parseInt(getLocalFileVersion(filename)) + 1;     //calculate the new version of the file
 
 
-                                updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
+
 
                                 displayFiles();
 

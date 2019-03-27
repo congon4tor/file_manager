@@ -106,6 +106,7 @@ public class RegisterForm extends AppCompatActivity {
                        if (contents.contains("\"success\":true")) {
                            Intent intent = new Intent(RegisterForm.this, LogInForm.class);     //go back to login activity
                            startActivity(intent);
+                           finish();
                            Toast.makeText(getApplicationContext(), "User created successfully", Toast.LENGTH_LONG).show();
 
                        } else {

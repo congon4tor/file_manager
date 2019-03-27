@@ -31,15 +31,25 @@ public class ConflictDialog extends DialogFragment {
                         String filename=getArguments().getString("filename");
 
                         if (which==0){   //force upload
-                            if (forceUpload(filename,((MainActivity)getActivity()).getLocalFileVersion(filename)).contains("\"success\":false")){
-                                Toast.makeText(((MainActivity)getActivity()).getApplicationContext(), "Error updating the file", Toast.LENGTH_LONG).show();
-                                return;
+
+
+
+                            try {//get the response contents
+                                String uploadResult = forceUpload(filename,((MainActivity)getActivity()).getLocalFileVersion(filename));
+                                if (uploadResult.contains("\"success\":false")){
+                                    Toast.makeText(((MainActivity)getActivity()).getApplicationContext(), "Error updating the file", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                                JSONObject json = new JSONObject(uploadResult);        //get the json form the response
+                                int currentVersion =Integer.parseInt(json.getJSONObject("file").get("version").toString());   //get the version field of the file
+                                ((MainActivity)getActivity()).updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
+                            }  catch (JSONException e) {
+                                e.printStackTrace();
                             }
+                            //int currentVersion = Integer.parseInt(((MainActivity)getActivity()).getServerFileVersion(filename)) + 2;     //calculate the new version of the file
 
-                            int currentVersion = Integer.parseInt(((MainActivity)getActivity()).getServerFileVersion(filename)) + 2;     //calculate the new version of the file
 
-
-                            ((MainActivity)getActivity()).updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
+                            //((MainActivity)getActivity()).updateLocalFileVersion(filename, Integer.toString(currentVersion));        //update the new version of the file
 
                             ((MainActivity)getActivity()).displayFiles();
 
@@ -59,6 +69,7 @@ public class ConflictDialog extends DialogFragment {
 
                         if (which==2){     //get diff file
                             getDiff(filename,((MainActivity)getActivity()).getLocalFileVersion(filename));
+                            ((MainActivity)getActivity()).displayFiles();
 
                         }
                     }
@@ -134,8 +145,13 @@ public class ConflictDialog extends DialogFragment {
             //check weather the server returns an error and display the proper error message
             if (contents.contains("\"success\":false")) {
                 Toast.makeText(((MainActivity)getActivity()).getApplicationContext(), "Error getting the file", Toast.LENGTH_LONG).show();
-
+                return;
             }
+            else if (contents.contains("Can not generate diff of a binary file")) {
+                Toast.makeText(((MainActivity) getActivity()).getApplicationContext(), "You cannot get the diff file of a media file", Toast.LENGTH_LONG).show();
+                return;
+            }
+
 
             JSONObject json=new JSONObject(contents);
 
@@ -146,7 +162,7 @@ public class ConflictDialog extends DialogFragment {
             writer.flush();
             writer.close();
 
-            ((MainActivity)getActivity()).addLocalFileInfo("diff.txt",json.getString("version"));
+            ((MainActivity)getActivity()).updateLocalFileVersion(filename,json.getString("version"));
 
         } catch (IOException | JSONException e) {
             e.printStackTrace();
