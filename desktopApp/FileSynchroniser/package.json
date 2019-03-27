@@ -1,15 +1,22 @@
 {
-  "name": "hello-world",
+  "name": "file-synchroniser",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-	"start": "electron .",
+    "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electron": "4.0.2"
+    "bootstrap": "^4.2.1",
+    "diff2html": "^2.7.0",
+    "electron": "4.0.2",
+    "electron-json-storage": "^4.1.6",
+    "isbinaryfile": "^4.0.0",
+    "jquery": "^3.3.1",
+    "popper.js": "^1.14.6",
+    "request": "^2.88.0"
   }
 }
