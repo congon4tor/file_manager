@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">FileSynchronizer</string>
+    <string name="synchronise">Synchronise</string>
+    <string name="file_details">File Details</string>
+    <string name="last_modified">Last Modified:</string>
+    <string name="size">Size:</string>
+    <string name="file">TextView</string>
+    <string name="local">TODO</string>
+    <string name="online">TODO</string>
+    <string name="notUpdated">TODO</string>
+    <string name="updated">TODO</string>
+    <string name="syn">TODO</string>
+    <string name="download">TODO</string>
+    <string name="upload">TODO</string>
+    <string name="localDelete">This file will be deleted from local storage. Are you sure you want to proceed?</string>
+    <string name="onlineDelete">This file will be deleted from the server. Are you sure you want to proceed?</string>
+    <string name="bothDelete">Choose where you want this file to be deleted</string>
+    <string name="delete">Yes</string>
+    <string name="notDelete">No</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string-array name="deleteOptions">
+        <item>Locally</item>
+        <item>Server</item>
+    </string-array>
+    <string name="conflict">It appears to be a conflict. Choose one of the options bellow to solve</string>
+    <string-array name="conflictOptions">
+        <item>Upload anyway and replace last version</item>
+        <item>Get the latest version</item>
+        <item>Get diff file and solve manually</item>
+    </string-array>
+    <string name="title_activity_login">Sign in</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password (optional)</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="url">18.130.64.155</string>
+
+</resources>
