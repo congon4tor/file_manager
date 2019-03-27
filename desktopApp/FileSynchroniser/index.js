@@ -6,6 +6,9 @@ const { shell } = require('electron');
 const crypto = require('crypto');
 const storage = require('electron-json-storage');
 let isBinaryFile = require("isbinaryfile");
+
+var logoutVar = false;
+
 // jar with cookies for subsequent requests
 var jar;
 //the cookie we will set so we can delete it later 
@@ -67,7 +70,7 @@ var menu = Menu.buildFromTemplate([
 				accelerator: 'CmdOrCtrl+R',
 				click() {
 					win.webContents.send('refreshLoader', '')
-					refreshScreen()
+					refreshScreen(false)
 				}
 			},
 			{
@@ -91,16 +94,19 @@ var menu = Menu.buildFromTemplate([
 				click() {
 					try {
 						logout()
+						logoutVar = true;
 						jar = request.jar();
 						win.loadURL(`file://${__dirname}/src/html/login.html`)
 						win.webContents.on('did-finish-load', () => {
-							Menu.setApplicationMenu(null);
+							if (logoutVar)
+								Menu.setApplicationMenu(null);
 						})
 					} catch (error) {
 						jar = request.jar();
 						win.loadURL(`file://${__dirname}/src/html/login.html`)
 						win.webContents.on('did-finish-load', () => {
-							Menu.setApplicationMenu(null);
+							if (logoutVar)
+								Menu.setApplicationMenu(null);
 						})
 
 					}
@@ -166,9 +172,9 @@ function loadDirectoryMenuOption() {
 	})
 }
 
-function refreshScreen() {
+function refreshScreen(login) {
 	if (watchedPath != null) {
-		loadDirectory(watchedPath);
+		loadDirectory(watchedPath, login);
 	} else {
 		storage.has('path', function (error, hasKey) {
 			try {
@@ -177,14 +183,14 @@ function refreshScreen() {
 					storage.get('path', function (error, data) {
 						try {
 							if (error) throw error;
-							loadDirectory(data.path);
+							loadDirectory(data.path, login);
 							watchedPath = data.path;
 						} catch (error) {
 							showMessageBox('error', 'Error', 'storage' + error);
 						}
 					})
 				} else {
-					loadDirectoryMenuOption();
+					loadDirectoryMenuOption(login);
 				}
 			} catch (error) {
 				showMessageBox('error', 'Error', 'storage' + error);
@@ -197,14 +203,17 @@ ipcMain.on('login', async (event, username, password) => {
 	try {
 		watchedPath = null;
 		let result = await login(username, password).catch((error) => { throw new Error('' + error) });
+		logoutVar = false;
 		win.loadURL(`file://${__dirname}/src/html/index.html`)
-		win.webContents.on('did-finish-load', () => {
+		//win.webContents.on('did-finish-load', () => {
+		if (!logoutVar) {
 			//start showing the loader 
 			win.webContents.send('loginLoader', '')
 			//show the menu when loging in 
 			Menu.setApplicationMenu(menu);
-			refreshScreen()
-		})
+			refreshScreen(true)
+		}
+		//})
 	}
 	catch (error) {
 		win.webContents.send('login:Error', '' + error)
@@ -213,19 +222,35 @@ ipcMain.on('login', async (event, username, password) => {
 
 ipcMain.on('logout', async (event) => {
 	try {
-		showMessageBox('warning', 'Warning', 'All pending local changes will not be synchronised');
-		let result = await logout().catch((error) => { throw new Error('' + error) });
-		jar = request.jar();
-		win.loadURL(`file://${__dirname}/src/html/login.html`)
-		win.webContents.on('did-finish-load', () => {
-			Menu.setApplicationMenu(null);
+
+		dialog.showMessageBox(win, {
+			type: 'warning',
+			cancelId: 1,
+			//bug fix: when user clicks the red X should direct to cancel 
+			buttons: (['OK', 'Cancel']),
+			title: 'Oops!',
+			message: 'All pending local changes will not be synchronised.'
+		}, resp => {
+			if (resp == 0) {
+				let result = logout().catch((error) => { throw new Error('' + error) });
+				logoutVar = true;
+				jar = request.jar();
+				win.loadURL(`file://${__dirname}/src/html/login.html`)
+				win.webContents.on('did-finish-load', () => {
+					if (logoutVar)
+						Menu.setApplicationMenu(null);
+				})
+			} else {
+				win.webContents.send('logout:Error', '')
+			}
 		})
 	}
 	catch (error) {
 		jar = request.jar();
 		win.loadURL(`file://${__dirname}/src/html/login.html`)
 		win.webContents.on('did-finish-load', () => {
-			Menu.setApplicationMenu(null);
+			if (logoutVar)
+				Menu.setApplicationMenu(null);
 		})
 	}
 })
@@ -290,12 +315,10 @@ function clearLocalStorage() {
 		if (error) throw error;
 		for (let file in totalFiles) {
 			storage.remove(totalFiles[file].filename, function (error) {
-				console.log('removed' + totalFiles[file].filename)
 				if (error) throw error;
 			});
 		}
 		storage.remove('path', function (error) {
-			console.log('removed path')
 			if (error) throw error;
 		});
 	});
@@ -344,7 +367,7 @@ async function signup(username, password) {
 }
 
 ipcMain.on('refreshScreen', async (event) => {
-	refreshScreen()
+	refreshScreen(false)
 })
 
 function localFileStorage(file) {
@@ -475,7 +498,7 @@ function getLocalFileHash(path) {
 }
 
 //deal with load file directory menu option
-async function loadDirectory(path) {
+async function loadDirectory(path, login) {
 	try {
 		let serverFiles = await getServerFiles('').catch((error) => { throw new Error('Getting server files. ' + error) });
 		let files = await readDirectory(path).catch((error) => { throw new Error('Reading local folder. ' + error) });
@@ -491,9 +514,14 @@ async function loadDirectory(path) {
 					flag = true;
 					//if files have different versions 
 					if (serverFilesArray[serverFile].version != localFiles[localFile].getVersion()) {
-						localFiles[localFile].setIsSync(File.DIFFERENT_VERSION);
-						localFiles[localFile].setDifferentContent(true);
-					} else {
+						if (login) {
+							localFiles[localFile].setVersion(serverFilesArray[serverFile].version);
+						} else {
+							localFiles[localFile].setIsSync(File.DIFFERENT_VERSION);
+							localFiles[localFile].setDifferentContent(true);
+						}
+					}
+					if (serverFilesArray[serverFile].version === localFiles[localFile].getVersion()) {
 						//if they have the same version check the hashes to see if we should show the differences button
 						localFiles[localFile].setIsSync(File.SAME_VERSION);
 						let userFileHash = await getLocalFileHash(localFiles[localFile].getTheID());
@@ -666,15 +694,25 @@ function downloadFile(filename) {
 		}
 	).on('response', function (response) {
 		if (response.statusCode != 200) {
-			success=false;
+			success = false;
 			win.webContents.send('downloadFileResult:Error', response.statusCode);
 		} else {
 			r.pipe(fs.createWriteStream(path));
-			success=true;
+			success = true;
 		}
-	}).on('end', () => {
+	}).on('end', async function () {
 		if (success) {
-			win.webContents.send('downloadFileResult', filename);
+			let serverFile = await getServerFiles(filename).catch((error) => { throw new Error('Error getting server file.' + error) });
+			let serverFileObj = JSON.parse(serverFile.body).file;
+			storage.set(filename, { filename: filename, version: serverFileObj.version }, function (error) {
+				try {
+					if (error) throw error;
+					win.webContents.send('downloadFileResult', filename);
+				} catch (error) {
+					win.webContents.send('downloadFileResult:Error', 'error');
+					showMessageBox('error', 'Error', '' + error);
+				}
+			});
 		}
 	});
 }
@@ -760,6 +798,15 @@ async function deleteServerFile(filename, version) {
 				jar: jar
 			}).then((response) => {
 				if (response.statusCode == 200) {
+					/////////////////////////
+					storage.set(filename, { filename: filename, version: 1 }, function (error) {
+						try {
+							if (error) throw error;
+						} catch (error) {
+							showMessageBox('error', 'Error', '' + error);
+						}
+					});
+					/////////////////////////////
 					resolve()
 				} else {
 					reject(response.statusCode + ': ' + JSON.parse(response.body).error)

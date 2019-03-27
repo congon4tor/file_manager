@@ -1,11 +1,11 @@
 module.exports = {
-    getServerFilesURL: 'http://localhost:3000/file/getInfo',
-    syncFileURL: 'http://localhost:3000/file/push',
-    downloadFileURL: 'http://localhost:3000/file/getFile',
-    getDiffURL: 'http://localhost:3000/file/getDiff',
-    loginURL: 'http://localhost:3000/user/login',
-    logoutURL: 'http://localhost:3000/user/logout',
-    deleteAccountURL: 'http://localhost:3000/user/delete',
-    signupURL: 'http://localhost:3000/user/signup',
-    genericURL: 'http://localhost:3000/'
+    getServerFilesURL: 'http://18.130.64.155/file/getInfo',
+    syncFileURL: 'http://18.130.64.155/file/push',
+    downloadFileURL: 'http://18.130.64.155/file/getFile',
+    getDiffURL: 'http://18.130.64.155/file/getDiff',
+    loginURL: 'http://18.130.64.155/user/login',
+    logoutURL: 'http://18.130.64.155/user/logout',
+    deleteAccountURL: 'http://18.130.64.155/user/delete',
+    signupURL: 'http://18.130.64.155/user/signup',
+    genericURL: 'http://18.130.64.155/'
 }
