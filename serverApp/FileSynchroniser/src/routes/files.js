@@ -250,7 +250,11 @@ router.post('/getDiff', ensureAuthenticated, (req, res)=> {
                 }
             });
 
+        }else{
+            return res.status(400).send({success: false, error: "No file uploaded"});
         }
+    }else{
+        return res.status(400).send({success: false, error: "No file uploaded"});
     }
     
 });
